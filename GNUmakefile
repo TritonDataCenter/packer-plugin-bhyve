@@ -1,4 +1,4 @@
-NAME=scaffolding
+NAME=bhyve
 BINARY=packer-plugin-${NAME}
 
 COUNT?=1

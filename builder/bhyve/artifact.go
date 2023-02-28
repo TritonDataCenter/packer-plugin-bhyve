@@ -1,4 +1,4 @@
-package scaffolding
+package bhyve
 
 // packersdk.Artifact implementation
 type Artifact struct {
