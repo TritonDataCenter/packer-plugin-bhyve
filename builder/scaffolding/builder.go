@@ -44,23 +44,11 @@ func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings
 func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (packer.Artifact, error) {
 	steps := []multistep.Step{}
 
-	steps = append(steps,
-		&StepSayConfig{
-			MockConfig: b.config.MockOption,
-		},
-		new(commonsteps.StepProvision),
-	)
 
 	// Setup the state bag and initial state for the steps
 	state := new(multistep.BasicStateBag)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
-
-	// Set the value of the generated data that will become available to provisioners.
-	// To share the data with post-processors, use the StateData in the artifact.
-	state.Put("generated_data", map[string]interface{}{
-		"GeneratedMockData": "mock-build-data",
-	})
 
 	// Run!
 	b.runner = commonsteps.NewRunner(steps, b.config.PackerConfig, ui)
@@ -72,8 +60,6 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	}
 
 	artifact := &Artifact{
-		// Add the builder generated data to the artifact StateData so that post-processors
-		// can access them.
 		StateData: map[string]interface{}{"generated_data": state.Get("generated_data")},
 	}
 	return artifact, nil
