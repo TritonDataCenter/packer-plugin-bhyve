@@ -32,6 +32,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 
 	// Setup the state bag and initial state for the steps
 	state := new(multistep.BasicStateBag)
+	state.Put("config", &b.config)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 
@@ -43,6 +44,8 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		TargetPath:  b.config.TargetPath,
 		Url:         b.config.ISOUrls,
 	})
+
+	steps = append(steps, new(stepConfigureVNC))
 
 	steps = append(steps, &stepBhyve{
 		name: b.config.VMName,

@@ -14,9 +14,14 @@ type stepBhyve struct {
 }
 
 func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
+	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
 	cd_device := fmt.Sprintf("2,ahci-cd,%s", state.Get("iso_path").(string))
+	vnc_args := fmt.Sprintf("30:0,fbuf,vga=off,rfb=%s:%d,password=%s,wait",
+		config.VNCBindAddress,
+		state.Get("vnc_port").(int),
+		state.Get("vnc_password").(string))
 
 	args := []string{
 		"-H",
@@ -25,7 +30,8 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		"-m", "1024",
 		"-s", "0,hostbridge,model=i440fx",
 		"-s", cd_device,
-		"-s", "30,xhci,tablet",
+		"-s", vnc_args,
+		"-s", "30:1,xhci,tablet",
 		"-s", "31,lpc",
 		step.name,
 	}

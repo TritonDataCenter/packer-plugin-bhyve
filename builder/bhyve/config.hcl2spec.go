@@ -23,7 +23,16 @@ type FlatConfig struct {
 	ISOUrls             []string          `mapstructure:"iso_urls" cty:"iso_urls" hcl:"iso_urls"`
 	TargetPath          *string           `mapstructure:"iso_target_path" cty:"iso_target_path" hcl:"iso_target_path"`
 	TargetExtension     *string           `mapstructure:"iso_target_extension" cty:"iso_target_extension" hcl:"iso_target_extension"`
+	BootGroupInterval   *string           `mapstructure:"boot_keygroup_interval" cty:"boot_keygroup_interval" hcl:"boot_keygroup_interval"`
+	BootWait            *string           `mapstructure:"boot_wait" cty:"boot_wait" hcl:"boot_wait"`
+	BootCommand         []string          `mapstructure:"boot_command" cty:"boot_command" hcl:"boot_command"`
+	DisableVNC          *bool             `mapstructure:"disable_vnc" cty:"disable_vnc" hcl:"disable_vnc"`
+	BootKeyInterval     *string           `mapstructure:"boot_key_interval" cty:"boot_key_interval" hcl:"boot_key_interval"`
 	VMName              *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
+	VNCBindAddress      *string           `mapstructure:"vnc_bind_address" required:"false" cty:"vnc_bind_address" hcl:"vnc_bind_address"`
+	VNCPortMax          *int              `mapstructure:"vnc_port_max" cty:"vnc_port_max" hcl:"vnc_port_max"`
+	VNCPortMin          *int              `mapstructure:"vnc_port_min" required:"false" cty:"vnc_port_min" hcl:"vnc_port_min"`
+	VNCUsePassword      *bool             `mapstructure:"vnc_use_password" required:"false" cty:"vnc_use_password" hcl:"vnc_use_password"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -51,7 +60,16 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"iso_urls":                   &hcldec.AttrSpec{Name: "iso_urls", Type: cty.List(cty.String), Required: false},
 		"iso_target_path":            &hcldec.AttrSpec{Name: "iso_target_path", Type: cty.String, Required: false},
 		"iso_target_extension":       &hcldec.AttrSpec{Name: "iso_target_extension", Type: cty.String, Required: false},
+		"boot_keygroup_interval":     &hcldec.AttrSpec{Name: "boot_keygroup_interval", Type: cty.String, Required: false},
+		"boot_wait":                  &hcldec.AttrSpec{Name: "boot_wait", Type: cty.String, Required: false},
+		"boot_command":               &hcldec.AttrSpec{Name: "boot_command", Type: cty.List(cty.String), Required: false},
+		"disable_vnc":                &hcldec.AttrSpec{Name: "disable_vnc", Type: cty.Bool, Required: false},
+		"boot_key_interval":          &hcldec.AttrSpec{Name: "boot_key_interval", Type: cty.String, Required: false},
 		"vm_name":                    &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
+		"vnc_bind_address":           &hcldec.AttrSpec{Name: "vnc_bind_address", Type: cty.String, Required: false},
+		"vnc_port_max":               &hcldec.AttrSpec{Name: "vnc_port_max", Type: cty.Number, Required: false},
+		"vnc_port_min":               &hcldec.AttrSpec{Name: "vnc_port_min", Type: cty.Number, Required: false},
+		"vnc_use_password":           &hcldec.AttrSpec{Name: "vnc_use_password", Type: cty.Bool, Required: false},
 	}
 	return s
 }
