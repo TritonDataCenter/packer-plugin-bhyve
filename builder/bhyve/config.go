@@ -14,6 +14,8 @@ type Config struct {
 	common.PackerConfig   `mapstructure:",squash"`
 	commonsteps.ISOConfig `mapstructure:",squash"`
 
+	VMName string `mapstructure:"vm_name" required:"false"`
+
 	ctx interpolate.Context
 }
 

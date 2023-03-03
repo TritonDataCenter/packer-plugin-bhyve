@@ -23,6 +23,7 @@ type FlatConfig struct {
 	ISOUrls             []string          `mapstructure:"iso_urls" cty:"iso_urls" hcl:"iso_urls"`
 	TargetPath          *string           `mapstructure:"iso_target_path" cty:"iso_target_path" hcl:"iso_target_path"`
 	TargetExtension     *string           `mapstructure:"iso_target_extension" cty:"iso_target_extension" hcl:"iso_target_extension"`
+	VMName              *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -50,6 +51,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"iso_urls":                   &hcldec.AttrSpec{Name: "iso_urls", Type: cty.List(cty.String), Required: false},
 		"iso_target_path":            &hcldec.AttrSpec{Name: "iso_target_path", Type: cty.String, Required: false},
 		"iso_target_extension":       &hcldec.AttrSpec{Name: "iso_target_extension", Type: cty.String, Required: false},
+		"vm_name":                    &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
 	}
 	return s
 }

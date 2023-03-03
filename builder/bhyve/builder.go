@@ -44,6 +44,10 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		Url:         b.config.ISOUrls,
 	})
 
+	steps = append(steps, &stepBhyve{
+		name: b.config.VMName,
+	})
+
 	// Run!
 	b.runner = commonsteps.NewRunner(steps, b.config.PackerConfig, ui)
 	b.runner.Run(ctx, state)
