@@ -35,6 +35,15 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 
+	steps = append(steps, &commonsteps.StepDownload{
+		Checksum:    b.config.ISOChecksum,
+		Description: "ISO",
+		Extension:   b.config.TargetExtension,
+		ResultKey:   "iso_path",
+		TargetPath:  b.config.TargetPath,
+		Url:         b.config.ISOUrls,
+	})
+
 	// Run!
 	b.runner = commonsteps.NewRunner(steps, b.config.PackerConfig, ui)
 	b.runner.Run(ctx, state)

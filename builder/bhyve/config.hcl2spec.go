@@ -18,6 +18,11 @@ type FlatConfig struct {
 	PackerOnError       *string           `mapstructure:"packer_on_error" cty:"packer_on_error" hcl:"packer_on_error"`
 	PackerUserVars      map[string]string `mapstructure:"packer_user_variables" cty:"packer_user_variables" hcl:"packer_user_variables"`
 	PackerSensitiveVars []string          `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables" hcl:"packer_sensitive_variables"`
+	ISOChecksum         *string           `mapstructure:"iso_checksum" required:"true" cty:"iso_checksum" hcl:"iso_checksum"`
+	RawSingleISOUrl     *string           `mapstructure:"iso_url" required:"true" cty:"iso_url" hcl:"iso_url"`
+	ISOUrls             []string          `mapstructure:"iso_urls" cty:"iso_urls" hcl:"iso_urls"`
+	TargetPath          *string           `mapstructure:"iso_target_path" cty:"iso_target_path" hcl:"iso_target_path"`
+	TargetExtension     *string           `mapstructure:"iso_target_extension" cty:"iso_target_extension" hcl:"iso_target_extension"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -40,6 +45,11 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"packer_on_error":            &hcldec.AttrSpec{Name: "packer_on_error", Type: cty.String, Required: false},
 		"packer_user_variables":      &hcldec.AttrSpec{Name: "packer_user_variables", Type: cty.Map(cty.String), Required: false},
 		"packer_sensitive_variables": &hcldec.AttrSpec{Name: "packer_sensitive_variables", Type: cty.List(cty.String), Required: false},
+		"iso_checksum":               &hcldec.AttrSpec{Name: "iso_checksum", Type: cty.String, Required: false},
+		"iso_url":                    &hcldec.AttrSpec{Name: "iso_url", Type: cty.String, Required: false},
+		"iso_urls":                   &hcldec.AttrSpec{Name: "iso_urls", Type: cty.List(cty.String), Required: false},
+		"iso_target_path":            &hcldec.AttrSpec{Name: "iso_target_path", Type: cty.String, Required: false},
+		"iso_target_extension":       &hcldec.AttrSpec{Name: "iso_target_extension", Type: cty.String, Required: false},
 	}
 	return s
 }
