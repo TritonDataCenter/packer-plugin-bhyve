@@ -18,7 +18,7 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 	ui := state.Get("ui").(packer.Ui)
 
 	cd_device := fmt.Sprintf("2,ahci-cd,%s", state.Get("iso_path").(string))
-	vnc_args := fmt.Sprintf("30:0,fbuf,vga=off,rfb=%s:%d,password=%s,wait",
+	vnc_args := fmt.Sprintf("29,fbuf,vga=off,rfb=%s:%d,password=%s,wait",
 		config.VNCBindAddress,
 		state.Get("vnc_port").(int),
 		state.Get("vnc_password").(string))
@@ -31,7 +31,7 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		"-s", "0,hostbridge,model=i440fx",
 		"-s", cd_device,
 		"-s", vnc_args,
-		"-s", "30:1,xhci,tablet",
+		"-s", "30,xhci,tablet",
 		"-s", "31,lpc",
 		step.name,
 	}
