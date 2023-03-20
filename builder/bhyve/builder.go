@@ -18,7 +18,7 @@ type Builder struct {
 
 func (b *Builder) ConfigSpec() hcldec.ObjectSpec { return b.config.FlatMapstructure().HCL2Spec() }
 
-func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings []string, err error) {
+func (b *Builder) Prepare(raws ...interface{}) ([]string, []string, error) {
 	warnings, errs := b.config.Prepare(raws...)
 	if errs != nil {
 		return nil, warnings, errs
@@ -28,29 +28,29 @@ func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings
 }
 
 func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (packer.Artifact, error) {
-	steps := []multistep.Step{}
-
-	// Setup the state bag and initial state for the steps
 	state := new(multistep.BasicStateBag)
 	state.Put("config", &b.config)
 	state.Put("debug", b.config.PackerDebug)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 
-	steps = append(steps, &commonsteps.StepDownload{
-		Checksum:    b.config.ISOChecksum,
-		Description: "ISO",
-		Extension:   b.config.TargetExtension,
-		ResultKey:   "iso_path",
-		TargetPath:  b.config.TargetPath,
-		Url:         b.config.ISOUrls,
-	})
-
-	steps = append(steps, new(stepConfigureVNC))
-
-	steps = append(steps, &stepBhyve{
-		name: b.config.VMName,
-	})
+	steps := []multistep.Step{}
+	steps = append(steps,
+		&commonsteps.StepDownload{
+			Checksum:    b.config.ISOChecksum,
+			Description: "ISO",
+			Extension:   b.config.TargetExtension,
+			ResultKey:   "iso_path",
+			TargetPath:  b.config.TargetPath,
+			Url:         b.config.ISOUrls,
+		},
+		new(stepHTTPIPDiscover),
+		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
+		new(stepConfigureVNC),
+		&stepBhyve{
+			name: b.config.VMName,
+		},
+	)
 
 	// Run!
 	b.runner = commonsteps.NewRunnerWithPauseFn(steps, b.config.PackerConfig, ui, state)

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+
 	"packer-plugin-bhyve/builder/bhyve"
 	"packer-plugin-bhyve/version"
 

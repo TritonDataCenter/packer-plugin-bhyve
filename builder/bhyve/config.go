@@ -14,10 +14,12 @@ import (
 )
 
 type Config struct {
-	common.PackerConfig   `mapstructure:",squash"`
-	commonsteps.ISOConfig `mapstructure:",squash"`
-	bootcommand.VNCConfig `mapstructure:",squash"`
+	common.PackerConfig    `mapstructure:",squash"`
+	commonsteps.HTTPConfig `mapstructure:",squash"`
+	commonsteps.ISOConfig  `mapstructure:",squash"`
+	bootcommand.VNCConfig  `mapstructure:",squash"`
 
+	HostNIC        string `mapstructure:"host_nic" required:"true"`
 	VMName         string `mapstructure:"vm_name" required:"false"`
 	VNCBindAddress string `mapstructure:"vnc_bind_address" required:"false"`
 	VNCPortMax     int    `mapstructure:"vnc_port_max"`
@@ -42,6 +44,7 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	isoWarnings, isoErrs := c.ISOConfig.Prepare(&c.ctx)
 	warnings = append(warnings, isoWarnings...)
 	errs = packer.MultiErrorAppend(errs, isoErrs...)
+	errs = packer.MultiErrorAppend(errs, c.HTTPConfig.Prepare(&c.ctx)...)
 
 	if c.VNCBindAddress == "" {
 		c.VNCBindAddress = "127.0.0.1"

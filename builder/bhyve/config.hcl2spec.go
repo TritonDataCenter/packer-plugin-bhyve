@@ -18,6 +18,12 @@ type FlatConfig struct {
 	PackerOnError       *string           `mapstructure:"packer_on_error" cty:"packer_on_error" hcl:"packer_on_error"`
 	PackerUserVars      map[string]string `mapstructure:"packer_user_variables" cty:"packer_user_variables" hcl:"packer_user_variables"`
 	PackerSensitiveVars []string          `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables" hcl:"packer_sensitive_variables"`
+	HTTPDir             *string           `mapstructure:"http_directory" cty:"http_directory" hcl:"http_directory"`
+	HTTPContent         map[string]string `mapstructure:"http_content" cty:"http_content" hcl:"http_content"`
+	HTTPPortMin         *int              `mapstructure:"http_port_min" cty:"http_port_min" hcl:"http_port_min"`
+	HTTPPortMax         *int              `mapstructure:"http_port_max" cty:"http_port_max" hcl:"http_port_max"`
+	HTTPAddress         *string           `mapstructure:"http_bind_address" cty:"http_bind_address" hcl:"http_bind_address"`
+	HTTPInterface       *string           `mapstructure:"http_interface" undocumented:"true" cty:"http_interface" hcl:"http_interface"`
 	ISOChecksum         *string           `mapstructure:"iso_checksum" required:"true" cty:"iso_checksum" hcl:"iso_checksum"`
 	RawSingleISOUrl     *string           `mapstructure:"iso_url" required:"true" cty:"iso_url" hcl:"iso_url"`
 	ISOUrls             []string          `mapstructure:"iso_urls" cty:"iso_urls" hcl:"iso_urls"`
@@ -28,6 +34,7 @@ type FlatConfig struct {
 	BootCommand         []string          `mapstructure:"boot_command" cty:"boot_command" hcl:"boot_command"`
 	DisableVNC          *bool             `mapstructure:"disable_vnc" cty:"disable_vnc" hcl:"disable_vnc"`
 	BootKeyInterval     *string           `mapstructure:"boot_key_interval" cty:"boot_key_interval" hcl:"boot_key_interval"`
+	HostNIC             *string           `mapstructure:"host_nic" required:"true" cty:"host_nic" hcl:"host_nic"`
 	VMName              *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 	VNCBindAddress      *string           `mapstructure:"vnc_bind_address" required:"false" cty:"vnc_bind_address" hcl:"vnc_bind_address"`
 	VNCPortMax          *int              `mapstructure:"vnc_port_max" cty:"vnc_port_max" hcl:"vnc_port_max"`
@@ -55,6 +62,12 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"packer_on_error":            &hcldec.AttrSpec{Name: "packer_on_error", Type: cty.String, Required: false},
 		"packer_user_variables":      &hcldec.AttrSpec{Name: "packer_user_variables", Type: cty.Map(cty.String), Required: false},
 		"packer_sensitive_variables": &hcldec.AttrSpec{Name: "packer_sensitive_variables", Type: cty.List(cty.String), Required: false},
+		"http_directory":             &hcldec.AttrSpec{Name: "http_directory", Type: cty.String, Required: false},
+		"http_content":               &hcldec.AttrSpec{Name: "http_content", Type: cty.Map(cty.String), Required: false},
+		"http_port_min":              &hcldec.AttrSpec{Name: "http_port_min", Type: cty.Number, Required: false},
+		"http_port_max":              &hcldec.AttrSpec{Name: "http_port_max", Type: cty.Number, Required: false},
+		"http_bind_address":          &hcldec.AttrSpec{Name: "http_bind_address", Type: cty.String, Required: false},
+		"http_interface":             &hcldec.AttrSpec{Name: "http_interface", Type: cty.String, Required: false},
 		"iso_checksum":               &hcldec.AttrSpec{Name: "iso_checksum", Type: cty.String, Required: false},
 		"iso_url":                    &hcldec.AttrSpec{Name: "iso_url", Type: cty.String, Required: false},
 		"iso_urls":                   &hcldec.AttrSpec{Name: "iso_urls", Type: cty.List(cty.String), Required: false},
@@ -65,6 +78,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"boot_command":               &hcldec.AttrSpec{Name: "boot_command", Type: cty.List(cty.String), Required: false},
 		"disable_vnc":                &hcldec.AttrSpec{Name: "disable_vnc", Type: cty.Bool, Required: false},
 		"boot_key_interval":          &hcldec.AttrSpec{Name: "boot_key_interval", Type: cty.String, Required: false},
+		"host_nic":                   &hcldec.AttrSpec{Name: "host_nic", Type: cty.String, Required: false},
 		"vm_name":                    &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
 		"vnc_bind_address":           &hcldec.AttrSpec{Name: "vnc_bind_address", Type: cty.String, Required: false},
 		"vnc_port_max":               &hcldec.AttrSpec{Name: "vnc_port_max", Type: cty.Number, Required: false},
