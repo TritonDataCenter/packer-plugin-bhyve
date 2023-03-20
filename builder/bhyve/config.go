@@ -19,20 +19,28 @@ type Config struct {
 	commonsteps.ISOConfig  `mapstructure:",squash"`
 	bootcommand.VNCConfig  `mapstructure:",squash"`
 
-	HostNIC        string `mapstructure:"host_nic" required:"true"`
-	VMName         string `mapstructure:"vm_name" required:"false"`
-	VNCBindAddress string `mapstructure:"vnc_bind_address" required:"false"`
-	VNCPortMax     int    `mapstructure:"vnc_port_max"`
-	VNCPortMin     int    `mapstructure:"vnc_port_min" required:"false"`
-	VNCUsePassword bool   `mapstructure:"vnc_use_password" required:"false"`
+	BootSteps      [][]string `mapstructure:"boot_steps" required:"false"`
+	HostNIC        string     `mapstructure:"host_nic" required:"true"`
+	VMName         string     `mapstructure:"vm_name" required:"false"`
+	VNCBindAddress string     `mapstructure:"vnc_bind_address" required:"false"`
+	VNCPortMax     int        `mapstructure:"vnc_port_max"`
+	VNCPortMin     int        `mapstructure:"vnc_port_min" required:"false"`
+	VNCUsePassword bool       `mapstructure:"vnc_use_password" required:"false"`
 
 	ctx interpolate.Context
 }
 
 func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	err := config.Decode(c, &config.DecodeOpts{
-		PluginType:  BuilderId,
-		Interpolate: true,
+		PluginType:         BuilderId,
+		Interpolate:        true,
+		InterpolateContext: &c.ctx,
+		InterpolateFilter: &interpolate.RenderFilter{
+			Exclude: []string{
+				"boot_command",
+				"boot_steps",
+			},
+		},
 	}, raws...)
 	if err != nil {
 		return nil, err

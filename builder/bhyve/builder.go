@@ -50,6 +50,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		&stepBhyve{
 			name: b.config.VMName,
 		},
+		&stepTypeBootCommand{},
 	)
 
 	// Run!

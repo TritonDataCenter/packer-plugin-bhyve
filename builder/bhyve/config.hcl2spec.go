@@ -34,6 +34,7 @@ type FlatConfig struct {
 	BootCommand         []string          `mapstructure:"boot_command" cty:"boot_command" hcl:"boot_command"`
 	DisableVNC          *bool             `mapstructure:"disable_vnc" cty:"disable_vnc" hcl:"disable_vnc"`
 	BootKeyInterval     *string           `mapstructure:"boot_key_interval" cty:"boot_key_interval" hcl:"boot_key_interval"`
+	BootSteps           [][]string        `mapstructure:"boot_steps" required:"false" cty:"boot_steps" hcl:"boot_steps"`
 	HostNIC             *string           `mapstructure:"host_nic" required:"true" cty:"host_nic" hcl:"host_nic"`
 	VMName              *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 	VNCBindAddress      *string           `mapstructure:"vnc_bind_address" required:"false" cty:"vnc_bind_address" hcl:"vnc_bind_address"`
@@ -78,6 +79,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"boot_command":               &hcldec.AttrSpec{Name: "boot_command", Type: cty.List(cty.String), Required: false},
 		"disable_vnc":                &hcldec.AttrSpec{Name: "disable_vnc", Type: cty.Bool, Required: false},
 		"boot_key_interval":          &hcldec.AttrSpec{Name: "boot_key_interval", Type: cty.String, Required: false},
+		"boot_steps":                 &hcldec.AttrSpec{Name: "boot_steps", Type: cty.List(cty.List(cty.String)), Required: false},
 		"host_nic":                   &hcldec.AttrSpec{Name: "host_nic", Type: cty.String, Required: false},
 		"vm_name":                    &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
 		"vnc_bind_address":           &hcldec.AttrSpec{Name: "vnc_bind_address", Type: cty.String, Required: false},
