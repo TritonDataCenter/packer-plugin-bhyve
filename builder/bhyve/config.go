@@ -20,12 +20,14 @@ type Config struct {
 	bootcommand.VNCConfig  `mapstructure:",squash"`
 
 	BootSteps      [][]string `mapstructure:"boot_steps" required:"false"`
+	DiskSize       string     `mapstructure:"disk_size" required:"false"`
 	HostNIC        string     `mapstructure:"host_nic" required:"true"`
 	VMName         string     `mapstructure:"vm_name" required:"false"`
 	VNCBindAddress string     `mapstructure:"vnc_bind_address" required:"false"`
 	VNCPortMax     int        `mapstructure:"vnc_port_max"`
 	VNCPortMin     int        `mapstructure:"vnc_port_min" required:"false"`
 	VNCUsePassword bool       `mapstructure:"vnc_use_password" required:"false"`
+	ZPool          string     `mapstructure:"zpool"`
 
 	ctx interpolate.Context
 }
@@ -81,6 +83,14 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	if c.VNCPortMin > c.VNCPortMax {
 		errs = packer.MultiErrorAppend(
 			errs, fmt.Errorf("vnc_port_min must be less than vnc_port_max"))
+	}
+
+	if c.DiskSize == "" {
+		errs = packer.MultiErrorAppend(errs, fmt.Errorf("disk_size must be specified"))
+	}
+
+	if c.ZPool == "" {
+		errs = packer.MultiErrorAppend(errs, fmt.Errorf("zpool must be specified"))
 	}
 
 	if errs != nil && len(errs.Errors) > 0 {

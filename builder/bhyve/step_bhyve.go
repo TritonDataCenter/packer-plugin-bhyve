@@ -17,7 +17,8 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
-	cd_device := fmt.Sprintf("2,ahci-cd,%s", state.Get("iso_path").(string))
+	disk_args := fmt.Sprintf("1,nvme,/dev/zvol/rdsk/%s/packer0", config.ZPool)
+	cd_args := fmt.Sprintf("2,ahci-cd,%s", state.Get("iso_path").(string))
 	vnc_args := fmt.Sprintf("29,fbuf,vga=off,rfb=%s:%d,password=%s",
 		config.VNCBindAddress,
 		state.Get("vnc_port").(int),
@@ -29,7 +30,8 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		"-l", "bootrom,/usr/share/bhyve/uefi-rom.bin",
 		"-m", "1024",
 		"-s", "0,hostbridge,model=i440fx",
-		"-s", cd_device,
+		"-s", disk_args,
+		"-s", cd_args,
 		"-s", vnc_args,
 		"-s", "30,xhci,tablet",
 		"-s", "31,lpc",

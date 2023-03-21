@@ -35,12 +35,14 @@ type FlatConfig struct {
 	DisableVNC          *bool             `mapstructure:"disable_vnc" cty:"disable_vnc" hcl:"disable_vnc"`
 	BootKeyInterval     *string           `mapstructure:"boot_key_interval" cty:"boot_key_interval" hcl:"boot_key_interval"`
 	BootSteps           [][]string        `mapstructure:"boot_steps" required:"false" cty:"boot_steps" hcl:"boot_steps"`
+	DiskSize            *string           `mapstructure:"disk_size" required:"false" cty:"disk_size" hcl:"disk_size"`
 	HostNIC             *string           `mapstructure:"host_nic" required:"true" cty:"host_nic" hcl:"host_nic"`
 	VMName              *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 	VNCBindAddress      *string           `mapstructure:"vnc_bind_address" required:"false" cty:"vnc_bind_address" hcl:"vnc_bind_address"`
 	VNCPortMax          *int              `mapstructure:"vnc_port_max" cty:"vnc_port_max" hcl:"vnc_port_max"`
 	VNCPortMin          *int              `mapstructure:"vnc_port_min" required:"false" cty:"vnc_port_min" hcl:"vnc_port_min"`
 	VNCUsePassword      *bool             `mapstructure:"vnc_use_password" required:"false" cty:"vnc_use_password" hcl:"vnc_use_password"`
+	ZPool               *string           `mapstructure:"zpool" cty:"zpool" hcl:"zpool"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -80,12 +82,14 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"disable_vnc":                &hcldec.AttrSpec{Name: "disable_vnc", Type: cty.Bool, Required: false},
 		"boot_key_interval":          &hcldec.AttrSpec{Name: "boot_key_interval", Type: cty.String, Required: false},
 		"boot_steps":                 &hcldec.AttrSpec{Name: "boot_steps", Type: cty.List(cty.List(cty.String)), Required: false},
+		"disk_size":                  &hcldec.AttrSpec{Name: "disk_size", Type: cty.String, Required: false},
 		"host_nic":                   &hcldec.AttrSpec{Name: "host_nic", Type: cty.String, Required: false},
 		"vm_name":                    &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
 		"vnc_bind_address":           &hcldec.AttrSpec{Name: "vnc_bind_address", Type: cty.String, Required: false},
 		"vnc_port_max":               &hcldec.AttrSpec{Name: "vnc_port_max", Type: cty.Number, Required: false},
 		"vnc_port_min":               &hcldec.AttrSpec{Name: "vnc_port_min", Type: cty.Number, Required: false},
 		"vnc_use_password":           &hcldec.AttrSpec{Name: "vnc_use_password", Type: cty.Bool, Required: false},
+		"zpool":                      &hcldec.AttrSpec{Name: "zpool", Type: cty.String, Required: false},
 	}
 	return s
 }

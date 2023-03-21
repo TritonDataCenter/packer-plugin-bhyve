@@ -46,6 +46,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		},
 		new(stepHTTPIPDiscover),
 		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
+		new(stepCreateZvol),
 		new(stepConfigureVNC),
 		&stepBhyve{
 			name: b.config.VMName,
