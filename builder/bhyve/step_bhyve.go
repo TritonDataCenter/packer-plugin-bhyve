@@ -33,6 +33,7 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		"-s", "0,hostbridge,model=i440fx",
 		"-s", disk_args,
 		"-s", cd_args,
+		"-s", "5,virtio-net-viona,vnic=packer0",
 		"-s", vnc_args,
 		"-s", "30,xhci,tablet",
 		"-s", "31,lpc",
