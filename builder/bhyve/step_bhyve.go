@@ -3,6 +3,7 @@ package bhyve
 import (
 	"context"
 	"fmt"
+	"log"
 	"os/exec"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -41,8 +42,7 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 	ui.Say(fmt.Sprintf("Starting bhyve VM %s", step.name))
 
 	cmd := exec.Command("/usr/sbin/bhyve", args...)
-	err := cmd.Start()
-	if err != nil {
+	if err := cmd.Start(); err != nil {
 		err = fmt.Errorf("Error starting VM: %s", err)
 		return multistep.ActionHalt
 	}
@@ -63,8 +63,7 @@ func (step *stepBhyve) Cleanup(state multistep.StateBag) {
 	ui.Say(fmt.Sprintf("Stopping bhyve VM %s", step.name))
 
 	cmd := exec.Command("/usr/sbin/bhyvectl", args...)
-	err := cmd.Start()
-	if err != nil {
-		err = fmt.Errorf("Error stopping VM: %s", err)
+	if err := cmd.Run(); err != nil {
+		log.Printf("Error stopping VM: %s", err)
 	}
 }
