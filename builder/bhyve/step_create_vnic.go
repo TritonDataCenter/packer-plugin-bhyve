@@ -7,6 +7,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
@@ -52,10 +53,21 @@ func (step *stepCreateVNIC) Cleanup(state multistep.StateBag) {
 
 	ui.Say(fmt.Sprintf("Deleting VNIC packer0 from link %s", config.HostNIC))
 
-	cmd := exec.Command("/usr/sbin/dladm", args...)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		log.Printf("Error deleting VNIC: %s", strings.TrimSpace(stderr.String()))
+	// Despite bhyvectl --destroy running before us, this will often fail
+	// with EBUSY for a few seconds afterwards, so we retry a few times.
+	var retries = 4
+	for i := 1; i <= retries; i++ {
+		cmd := exec.Command("/usr/sbin/dladm", args...)
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			if i == retries {
+				log.Printf("Error deleting VNIC: %s", strings.TrimSpace(stderr.String()))
+				break
+			}
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		break
 	}
 }
