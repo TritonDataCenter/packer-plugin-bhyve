@@ -2,6 +2,7 @@ package bhyve
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -34,6 +35,9 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 
+	// XXX: Hack until we port SSHTimeout
+	tm, _ := time.ParseDuration("1h")
+
 	steps := []multistep.Step{}
 	steps = append(steps,
 		&commonsteps.StepDownload{
@@ -53,6 +57,9 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			name: b.config.VMName,
 		},
 		&stepTypeBootCommand{},
+		&stepWaitGuestAddress{
+			timeout: tm,
+		},
 	)
 
 	// Run!
