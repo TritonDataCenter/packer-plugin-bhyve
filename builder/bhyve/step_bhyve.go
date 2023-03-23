@@ -21,12 +21,16 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
-	disk_args := fmt.Sprintf("1,nvme,/dev/zvol/rdsk/%s/packer0", config.ZPool)
-	cd_args := fmt.Sprintf("2,ahci-cd,%s", state.Get("iso_path").(string))
-	vnc_args := fmt.Sprintf("29,fbuf,vga=off,rfb=%s:%d,password=%s",
-		config.VNCBindAddress,
-		state.Get("vnc_port").(int),
-		state.Get("vnc_password").(string))
+	// Use the same slots as pci_slot_t in
+	// illumos-joyent usr/src/lib/brand/bhyve/zone/boot.c
+	const (
+		SlotHostBridge int = 0
+		SlotCDROM          = 3
+		SlotBootDisk       = 4
+		SlotNIC            = 6
+		SlotFBuf           = 30
+		SlotLPC            = 31
+	)
 
 	args := []string{
 		"-D",
@@ -34,13 +38,18 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		"-c", "1",
 		"-l", "bootrom,/usr/share/bhyve/uefi-rom.bin",
 		"-m", "1024",
-		"-s", "0,hostbridge,model=i440fx",
-		"-s", disk_args,
-		"-s", cd_args,
-		"-s", "5,virtio-net-viona,vnic=packer0",
-		"-s", vnc_args,
-		"-s", "30,xhci,tablet",
-		"-s", "31,lpc",
+		"-s", fmt.Sprintf("%s,hostbridge,model=i440fx", SlotHostBridge),
+		"-s", fmt.Sprintf("%s,ahci-cd,%s", SlotCDROM,
+			state.Get("iso_path").(string)),
+		"-s", fmt.Sprintf("%s,virtio-blk,/dev/zvol/rdsk/%s/packer0",
+			SlotBootDisk, config.ZPool),
+		"-s", fmt.Sprintf("%s,virtio-net-viona,vnic=packer0", SlotNIC),
+		"-s", fmt.Sprintf("%s:0,fbuf,vga=off,rfb=%s:%d,password=%s",
+			SlotFBuf, config.VNCBindAddress,
+			state.Get("vnc_port").(int),
+			state.Get("vnc_password").(string)),
+		"-s", fmt.Sprintf("%s:1,xhci,tablet", SlotFBuf),
+		"-s", fmt.Sprintf("%s,lpc", SlotLPC),
 		step.name,
 	}
 
