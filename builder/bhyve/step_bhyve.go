@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"sync"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 )
 
 type stepBhyve struct {
-	name string
+	name    string
+	vmEndCh <-chan int
+	lock    sync.Mutex
 }
 
 func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -41,6 +44,9 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		step.name,
 	}
 
+	step.lock.Lock()
+	defer step.lock.Unlock()
+
 	ui.Say(fmt.Sprintf("Starting bhyve VM %s", step.name))
 
 	cmd := exec.Command("/usr/sbin/bhyve", args...)
@@ -48,6 +54,34 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		err = fmt.Errorf("Error starting VM: %s", err)
 		return multistep.ActionHalt
 	}
+
+	// bhyve exits when a VM reboots which is a bit annoying in this
+	// context.  We need to check for this and restart it on success so
+	// that the post-install provisioning step can run.  Once complete
+	// the VM is powered off which is a non-zero exit status.
+	endCh := make(chan int, 1)
+	go func() {
+		var rc int = 0
+		if err := cmd.Wait(); err == nil {
+			ui.Say(fmt.Sprintf("Restarting bhyve VM %s after reboot", step.name))
+			cmd := exec.Command("/usr/sbin/bhyve", args...)
+			if err := cmd.Start(); err != nil {
+				// XXX: Report this as failing to packer
+				ui.Say(fmt.Sprintf("Error restarting VM: %s", err))
+			}
+		} else {
+			if status, ok := err.(*exec.ExitError); ok {
+				rc = status.ExitCode()
+			}
+		}
+
+		endCh <- rc
+		step.lock.Lock()
+		defer step.lock.Unlock()
+		step.vmEndCh = nil
+	}()
+
+	step.vmEndCh = endCh
 
 	return multistep.ActionContinue
 }
