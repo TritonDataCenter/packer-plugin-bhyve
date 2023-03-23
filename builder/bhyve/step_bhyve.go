@@ -26,6 +26,7 @@ func (step *stepBhyve) Run(ctx context.Context, state multistep.StateBag) multis
 		state.Get("vnc_password").(string))
 
 	args := []string{
+		"-D",
 		"-H",
 		"-c", "1",
 		"-l", "bootrom,/usr/share/bhyve/uefi-rom.bin",
