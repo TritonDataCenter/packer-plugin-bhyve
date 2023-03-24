@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
+	"github.com/hashicorp/packer-plugin-sdk/communicator"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/multistep/commonsteps"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
@@ -65,6 +66,13 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		&stepTypeBootCommand{},
 		&stepWaitGuestAddress{
 			timeout: tm,
+		},
+		&communicator.StepConnect{
+			Config:    &b.config.CommConfig.Comm,
+			Host:      commHost(b.config.CommConfig.Comm.Host()),
+			SSHConfig: b.config.CommConfig.Comm.SSHConfigFunc(),
+			SSHPort:   commPort,
+			WinRMPort: commPort,
 		},
 	)
 

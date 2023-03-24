@@ -20,6 +20,7 @@ type Config struct {
 	bootcommand.VNCConfig  `mapstructure:",squash"`
 
 	BootSteps      [][]string `mapstructure:"boot_steps" required:"false"`
+	CommConfig     CommConfig `mapstructure:",squash"`
 	DiskSize       string     `mapstructure:"disk_size" required:"false"`
 	HostNIC        string     `mapstructure:"host_nic" required:"true"`
 	VMName         string     `mapstructure:"vm_name" required:"false"`
@@ -55,6 +56,11 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	warnings = append(warnings, isoWarnings...)
 	errs = packer.MultiErrorAppend(errs, isoErrs...)
 	errs = packer.MultiErrorAppend(errs, c.HTTPConfig.Prepare(&c.ctx)...)
+	ccWarn, ccErr := c.CommConfig.Prepare(&c.ctx)
+	if len(ccErr) > 0 {
+		errs = packer.MultiErrorAppend(errs, ccErr...)
+	}
+	warnings = append(warnings, ccWarn...)
 
 	if c.VNCBindAddress == "" {
 		c.VNCBindAddress = "127.0.0.1"
