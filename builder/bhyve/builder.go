@@ -35,6 +35,12 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 
+	driver := &BhyveDriver{
+		config: &b.config,
+		state:  state,
+	}
+	state.Put("driver", driver)
+
 	// XXX: Hack until we port SSHTimeout
 	tm, _ := time.ParseDuration("1h")
 
