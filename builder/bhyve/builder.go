@@ -74,6 +74,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			SSHPort:   commPort,
 			WinRMPort: commPort,
 		},
+		new(commonsteps.StepProvision),
 	)
 
 	// Run!
