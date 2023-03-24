@@ -75,6 +75,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			WinRMPort: commPort,
 		},
 		new(commonsteps.StepProvision),
+		&stepShutdown{
+			ShutdownTimeout: b.config.ShutdownTimeout,
+			ShutdownCommand: b.config.ShutdownCommand,
+			Comm:            &b.config.CommConfig.Comm,
+		},
 	)
 
 	// Run!

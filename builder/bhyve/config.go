@@ -9,15 +9,17 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/common"
 	"github.com/hashicorp/packer-plugin-sdk/multistep/commonsteps"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/shutdowncommand"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 )
 
 type Config struct {
-	common.PackerConfig    `mapstructure:",squash"`
-	commonsteps.HTTPConfig `mapstructure:",squash"`
-	commonsteps.ISOConfig  `mapstructure:",squash"`
-	bootcommand.VNCConfig  `mapstructure:",squash"`
+	common.PackerConfig            `mapstructure:",squash"`
+	commonsteps.HTTPConfig         `mapstructure:",squash"`
+	commonsteps.ISOConfig          `mapstructure:",squash"`
+	bootcommand.VNCConfig          `mapstructure:",squash"`
+	shutdowncommand.ShutdownConfig `mapstructure:",squash"`
 
 	BootSteps      [][]string `mapstructure:"boot_steps" required:"false"`
 	CommConfig     CommConfig `mapstructure:",squash"`
