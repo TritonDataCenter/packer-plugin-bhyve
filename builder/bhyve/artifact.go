@@ -1,10 +1,16 @@
 package bhyve
 
-// packersdk.Artifact implementation
+import (
+	"fmt"
+	"os"
+)
+
+// Artifact is the result of running the Bhyve builder, namely a set
+// of files associated with the resulting machine.
 type Artifact struct {
-	// StateData should store data such as GeneratedData
-	// to be shared with post-processors
-	StateData map[string]interface{}
+	dir   string
+	f     []string
+	state map[string]interface{}
 }
 
 func (*Artifact) BuilderId() string {
@@ -12,21 +18,21 @@ func (*Artifact) BuilderId() string {
 }
 
 func (a *Artifact) Files() []string {
-	return []string{}
+	return a.f
 }
 
 func (*Artifact) Id() string {
-	return ""
+	return "VM"
 }
 
 func (a *Artifact) String() string {
-	return ""
+	return fmt.Sprintf("VM files in directory: %s", a.dir)
 }
 
 func (a *Artifact) State(name string) interface{} {
-	return a.StateData[name]
+	return a.state[name]
 }
 
 func (a *Artifact) Destroy() error {
-	return nil
+	return os.RemoveAll(a.dir)
 }

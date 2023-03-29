@@ -90,6 +90,7 @@ type FlatConfig struct {
 	HostPortMax               *int              `mapstructure:"host_port_max" required:"false" cty:"host_port_max" hcl:"host_port_max"`
 	DiskSize                  *string           `mapstructure:"disk_size" required:"false" cty:"disk_size" hcl:"disk_size"`
 	HostNIC                   *string           `mapstructure:"host_nic" required:"true" cty:"host_nic" hcl:"host_nic"`
+	OutputDir                 *string           `mapstructure:"output_directory" required:"false" cty:"output_directory" hcl:"output_directory"`
 	VMName                    *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 	VNCBindAddress            *string           `mapstructure:"vnc_bind_address" required:"false" cty:"vnc_bind_address" hcl:"vnc_bind_address"`
 	VNCPortMax                *int              `mapstructure:"vnc_port_max" cty:"vnc_port_max" hcl:"vnc_port_max"`
@@ -190,6 +191,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"host_port_max":                &hcldec.AttrSpec{Name: "host_port_max", Type: cty.Number, Required: false},
 		"disk_size":                    &hcldec.AttrSpec{Name: "disk_size", Type: cty.String, Required: false},
 		"host_nic":                     &hcldec.AttrSpec{Name: "host_nic", Type: cty.String, Required: false},
+		"output_directory":             &hcldec.AttrSpec{Name: "output_directory", Type: cty.String, Required: false},
 		"vm_name":                      &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
 		"vnc_bind_address":             &hcldec.AttrSpec{Name: "vnc_bind_address", Type: cty.String, Required: false},
 		"vnc_port_max":                 &hcldec.AttrSpec{Name: "vnc_port_max", Type: cty.Number, Required: false},

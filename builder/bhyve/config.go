@@ -4,6 +4,7 @@ package bhyve
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/hashicorp/packer-plugin-sdk/bootcommand"
 	"github.com/hashicorp/packer-plugin-sdk/common"
@@ -25,6 +26,7 @@ type Config struct {
 	CommConfig     CommConfig `mapstructure:",squash"`
 	DiskSize       string     `mapstructure:"disk_size" required:"false"`
 	HostNIC        string     `mapstructure:"host_nic" required:"true"`
+	OutputDir      string     `mapstructure:"output_directory" required:"false"`
 	VMName         string     `mapstructure:"vm_name" required:"false"`
 	VNCBindAddress string     `mapstructure:"vnc_bind_address" required:"false"`
 	VNCPortMax     int        `mapstructure:"vnc_port_max"`
@@ -65,6 +67,25 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	}
 	warnings = append(warnings, ccWarn...)
 
+	if c.DiskSize == "" {
+		errs = packer.MultiErrorAppend(errs, fmt.Errorf("disk_size must be specified"))
+	}
+
+	if c.OutputDir == "" {
+		c.OutputDir = fmt.Sprintf("output-%s", c.PackerBuildName)
+	}
+	if !c.PackerForce {
+		if _, err := os.Stat(c.OutputDir); err == nil {
+			errs = packer.MultiErrorAppend(
+				errs,
+				fmt.Errorf("Output directory '%s' already exists. It must not exist.", c.OutputDir))
+		}
+	}
+
+	if c.VMName == "" {
+		c.VMName = fmt.Sprintf("packer-%s", c.PackerBuildName)
+	}
+
 	if c.VNCBindAddress == "" {
 		c.VNCBindAddress = "127.0.0.1"
 	}
@@ -92,10 +113,6 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	if c.VNCPortMin > c.VNCPortMax {
 		errs = packer.MultiErrorAppend(
 			errs, fmt.Errorf("vnc_port_min must be less than vnc_port_max"))
-	}
-
-	if c.DiskSize == "" {
-		errs = packer.MultiErrorAppend(errs, fmt.Errorf("disk_size must be specified"))
 	}
 
 	if c.ZPool == "" {

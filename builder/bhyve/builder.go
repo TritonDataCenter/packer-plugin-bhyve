@@ -2,6 +2,9 @@ package bhyve
 
 import (
 	"context"
+	"errors"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
@@ -55,6 +58,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			TargetPath:  b.config.TargetPath,
 			Url:         b.config.ISOUrls,
 		},
+		new(stepPrepareOutputDir),
 		new(stepHTTPIPDiscover),
 		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
 		new(stepCreateZvol),
@@ -91,8 +95,38 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		return nil, err.(error)
 	}
 
-	artifact := &Artifact{
-		StateData: map[string]interface{}{"generated_data": state.Get("generated_data")},
+	if _, ok := state.GetOk(multistep.StateCancelled); ok {
+		return nil, errors.New("Build was cancelled.")
 	}
+
+	if _, ok := state.GetOk(multistep.StateHalted); ok {
+		return nil, errors.New("Build was halted.")
+	}
+	files := make([]string, 0, 5)
+	visit := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			files = append(files, path)
+		}
+
+		return nil
+	}
+
+	if err := filepath.Walk(b.config.OutputDir, visit); err != nil {
+		return nil, err
+	}
+
+	artifact := &Artifact{
+		dir:   b.config.OutputDir,
+		f:     files,
+		state: make(map[string]interface{}),
+	}
+
+	artifact.state["generated_data"] = state.Get("generated_data")
+	artifact.state["diskName"] = b.config.VMName
+	artifact.state["diskSize"] = b.config.DiskSize
+
 	return artifact, nil
 }
