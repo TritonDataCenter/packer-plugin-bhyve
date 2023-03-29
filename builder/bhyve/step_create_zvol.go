@@ -13,9 +13,7 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 )
 
-type stepCreateZvol struct {
-	name string
-}
+type stepCreateZvol struct{}
 
 func (step *stepCreateZvol) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
