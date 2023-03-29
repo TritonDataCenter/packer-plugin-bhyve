@@ -84,6 +84,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			ShutdownCommand: b.config.ShutdownCommand,
 			Comm:            &b.config.CommConfig.Comm,
 		},
+		&stepCreateSnapshot{},
 	)
 
 	// Run!
