@@ -58,6 +58,7 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	warnings = append(warnings, isoWarnings...)
 	errs = packer.MultiErrorAppend(errs, isoErrs...)
 	errs = packer.MultiErrorAppend(errs, c.HTTPConfig.Prepare(&c.ctx)...)
+	errs = packer.MultiErrorAppend(errs, c.ShutdownConfig.Prepare(&c.ctx)...)
 	ccWarn, ccErr := c.CommConfig.Prepare(&c.ctx)
 	if len(ccErr) > 0 {
 		errs = packer.MultiErrorAppend(errs, ccErr...)
