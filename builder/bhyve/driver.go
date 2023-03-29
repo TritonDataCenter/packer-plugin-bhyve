@@ -24,6 +24,13 @@ type BhyveDriver struct {
 }
 
 func (d *BhyveDriver) Start() error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	if d.vmCmd != nil {
+		panic("Existing VM state found")
+	}
+
 	// Use the same slots as pci_slot_t in
 	// illumos-joyent usr/src/lib/brand/bhyve/zone/boot.c
 	const (
@@ -67,13 +74,6 @@ func (d *BhyveDriver) Start() error {
 		d.config.VMName,
 	)
 
-	d.lock.Lock()
-	defer d.lock.Unlock()
-
-	if d.vmCmd != nil {
-		panic("Existing VM state found")
-	}
-
 	log.Printf("Starting bhyve VM %s", d.config.VMName)
 	log.Printf("boot_args %v", boot_args)
 	log.Printf("reboot_args %v", reboot_args)
@@ -90,30 +90,48 @@ func (d *BhyveDriver) Start() error {
 	// the VM is powered off which is a non-zero exit status.
 	endCh := make(chan int, 1)
 	go func() {
-		for {
-			var rc int = 0
-			if err := cmd.Wait(); err == nil {
-				log.Printf("Restarting bhyve VM %s after reboot", d.config.VMName)
-				cmd := exec.Command("/usr/sbin/bhyve", reboot_args...)
-				if err := cmd.Start(); err != nil {
-					// XXX: Report this as failing to packer
-					log.Printf("Error restarting VM: %s", err)
-				}
-				d.lock.Lock()
-				defer d.lock.Unlock()
-				d.vmCmd = cmd
+		var rc int = 0
+		if err := cmd.Wait(); err == nil {
+			log.Printf("Restarting bhyve VM %s after reboot", d.config.VMName)
+			cmd2 := exec.Command("/usr/sbin/bhyve", reboot_args...)
+			if err := cmd2.Start(); err != nil {
+				// XXX: Report this as failing to packer
+				log.Printf("Error restarting VM: %s", err)
+			}
+			d.lock.Lock()
+			d.vmCmd = cmd2
+			d.lock.Unlock()
+
+			// Wait for the restarted bhyve to exit.  A successful
+			// exit here is one that has a status code of 1 which
+			// Bhyve uses to indicate a VM shutdown.
+			err := cmd2.Wait()
+			if err == nil {
+				// XXX: Report this as failing to packer
+				log.Printf("Bhyve rebooted unexpectedly ?")
+				rc = 254
 			} else {
+				// Replace bhyve's "success" of 1 with a proper
+				// exit of 0.
 				if status, ok := err.(*exec.ExitError); ok {
 					rc = status.ExitCode()
+					if rc == 1 {
+						rc = 0
+					}
 				}
-				endCh <- rc
-				d.lock.Lock()
-				defer d.lock.Unlock()
-				d.vmCmd = nil
-				d.vmEndCh = nil
-				break
+			}
+		} else {
+			// XXX: Report this as failing to packer
+			log.Printf("Bhyve exited unexpectedly ?")
+			if status, ok := err.(*exec.ExitError); ok {
+				rc = status.ExitCode()
 			}
 		}
+		endCh <- rc
+		d.lock.Lock()
+		defer d.lock.Unlock()
+		d.vmCmd = nil
+		d.vmEndCh = nil
 	}()
 
 	d.vmCmd = cmd
