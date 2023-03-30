@@ -3,7 +3,6 @@ package bhyve
 import (
 	"context"
 	"fmt"
-	"log"
 	"os/exec"
 	"sync"
 
@@ -40,10 +39,9 @@ func (step *stepBhyve) Cleanup(state multistep.StateBag) {
 		"--destroy",
 	}
 
+	// Ignore errors, we use -D to destroy the VM so this might not exit
+	// success if it's already been destroyed.
 	ui.Say(fmt.Sprintf("Stopping bhyve VM %s", step.name))
-
 	cmd := exec.Command("/usr/sbin/bhyvectl", args...)
-	if err := cmd.Run(); err != nil {
-		log.Printf("Error stopping VM: %s", err)
-	}
+	cmd.Run()
 }
