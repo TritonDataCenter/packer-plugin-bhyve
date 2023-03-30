@@ -23,11 +23,12 @@ func (step *stepCreateVNIC) Run(ctx context.Context, state multistep.StateBag) m
 
 	args := []string{
 		"create-vnic",
-		"-l", config.HostNIC,
+		"-t",
+		"-l", config.VNICLink,
 		"packer0",
 	}
 
-	ui.Say(fmt.Sprintf("Creating VNIC packer0 on link %s", config.HostNIC))
+	ui.Say(fmt.Sprintf("Creating VNIC packer0 on link %s", config.VNICLink))
 
 	cmd := exec.Command("/usr/sbin/dladm", args...)
 	var stderr bytes.Buffer
@@ -51,7 +52,7 @@ func (step *stepCreateVNIC) Cleanup(state multistep.StateBag) {
 		"packer0",
 	}
 
-	ui.Say(fmt.Sprintf("Deleting VNIC packer0 from link %s", config.HostNIC))
+	ui.Say(fmt.Sprintf("Deleting VNIC packer0 from link %s", config.VNICLink))
 
 	// Despite bhyvectl --destroy running before us, this will often fail
 	// with EBUSY for a few seconds afterwards, so we retry a few times.

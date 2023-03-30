@@ -89,13 +89,14 @@ type FlatConfig struct {
 	HostPortMin               *int              `mapstructure:"host_port_min" required:"false" cty:"host_port_min" hcl:"host_port_min"`
 	HostPortMax               *int              `mapstructure:"host_port_max" required:"false" cty:"host_port_max" hcl:"host_port_max"`
 	DiskSize                  *string           `mapstructure:"disk_size" required:"false" cty:"disk_size" hcl:"disk_size"`
-	HostNIC                   *string           `mapstructure:"host_nic" required:"true" cty:"host_nic" hcl:"host_nic"`
+	HostNIC                   *string           `mapstructure:"host_nic" cty:"host_nic" hcl:"host_nic"`
 	OutputDir                 *string           `mapstructure:"output_directory" required:"false" cty:"output_directory" hcl:"output_directory"`
 	VMName                    *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 	VNCBindAddress            *string           `mapstructure:"vnc_bind_address" required:"false" cty:"vnc_bind_address" hcl:"vnc_bind_address"`
 	VNCPortMax                *int              `mapstructure:"vnc_port_max" cty:"vnc_port_max" hcl:"vnc_port_max"`
 	VNCPortMin                *int              `mapstructure:"vnc_port_min" required:"false" cty:"vnc_port_min" hcl:"vnc_port_min"`
 	VNCUsePassword            *bool             `mapstructure:"vnc_use_password" required:"false" cty:"vnc_use_password" hcl:"vnc_use_password"`
+	VNICLink                  *string           `mapstructure:"vnic_link" required:"false" cty:"vnic_link" hcl:"vnic_link"`
 	ZPool                     *string           `mapstructure:"zpool" cty:"zpool" hcl:"zpool"`
 }
 
@@ -197,6 +198,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"vnc_port_max":                 &hcldec.AttrSpec{Name: "vnc_port_max", Type: cty.Number, Required: false},
 		"vnc_port_min":                 &hcldec.AttrSpec{Name: "vnc_port_min", Type: cty.Number, Required: false},
 		"vnc_use_password":             &hcldec.AttrSpec{Name: "vnc_use_password", Type: cty.Bool, Required: false},
+		"vnic_link":                    &hcldec.AttrSpec{Name: "vnic_link", Type: cty.String, Required: false},
 		"zpool":                        &hcldec.AttrSpec{Name: "zpool", Type: cty.String, Required: false},
 	}
 	return s

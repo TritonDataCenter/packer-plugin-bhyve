@@ -25,13 +25,14 @@ type Config struct {
 	BootSteps      [][]string `mapstructure:"boot_steps" required:"false"`
 	CommConfig     CommConfig `mapstructure:",squash"`
 	DiskSize       string     `mapstructure:"disk_size" required:"false"`
-	HostNIC        string     `mapstructure:"host_nic" required:"true"`
+	HostNIC        string     `mapstructure:"host_nic"`
 	OutputDir      string     `mapstructure:"output_directory" required:"false"`
 	VMName         string     `mapstructure:"vm_name" required:"false"`
 	VNCBindAddress string     `mapstructure:"vnc_bind_address" required:"false"`
 	VNCPortMax     int        `mapstructure:"vnc_port_max"`
 	VNCPortMin     int        `mapstructure:"vnc_port_min" required:"false"`
 	VNCUsePassword bool       `mapstructure:"vnc_use_password" required:"false"`
+	VNICLink       string     `mapstructure:"vnic_link" required:"false"`
 	ZPool          string     `mapstructure:"zpool"`
 
 	ctx interpolate.Context
@@ -113,6 +114,10 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	if c.VNCPortMin > c.VNCPortMax {
 		errs = packer.MultiErrorAppend(
 			errs, fmt.Errorf("vnc_port_min must be less than vnc_port_max"))
+	}
+
+	if c.VNICLink == "" {
+		c.VNICLink = c.HostNIC
 	}
 
 	if c.ZPool == "" {
