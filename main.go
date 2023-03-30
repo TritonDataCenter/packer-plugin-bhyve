@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"packer-plugin-bhyve/builder/bhyve"
-	"packer-plugin-bhyve/version"
-
 	"github.com/hashicorp/packer-plugin-sdk/plugin"
+	"github.com/tritondatacenter/packer-plugin-bhyve/builder/bhyve"
+	"github.com/tritondatacenter/packer-plugin-bhyve/version"
 )
 
 func main() {
