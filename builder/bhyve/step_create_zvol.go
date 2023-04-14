@@ -19,7 +19,8 @@ func (step *stepCreateZvol) Run(ctx context.Context, state multistep.StateBag) m
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
-	zvol_path := fmt.Sprintf("%s/packer0", config.ZPool)
+	zvol_path := fmt.Sprintf("%s/%s", config.DiskZPool, config.DiskName)
+	rdsk_path := fmt.Sprintf("/dev/zvol/rdsk/%s", zvol_path)
 
 	args := []string{
 		"create",
@@ -39,6 +40,8 @@ func (step *stepCreateZvol) Run(ctx context.Context, state multistep.StateBag) m
 		return multistep.ActionHalt
 	}
 
+	state.Put("bhyve_disk_path", rdsk_path)
+
 	return multistep.ActionContinue
 }
 
@@ -46,7 +49,7 @@ func (step *stepCreateZvol) Cleanup(state multistep.StateBag) {
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
-	zvol_path := fmt.Sprintf("%s/packer0", config.ZPool)
+	zvol_path := fmt.Sprintf("%s/%s", config.DiskZPool, config.DiskName)
 
 	args := []string{
 		"destroy",

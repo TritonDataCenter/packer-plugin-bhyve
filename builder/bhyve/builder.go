@@ -61,7 +61,15 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		new(stepPrepareOutputDir),
 		new(stepHTTPIPDiscover),
 		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
-		new(stepCreateZvol),
+	)
+
+	if b.config.DiskUseZVOL {
+		steps = append(steps, new(stepCreateZvol))
+	} else {
+		steps = append(steps, new(stepCreateDisk))
+	}
+
+	steps = append(steps,
 		new(stepCreateVNIC),
 		new(stepConfigureVNC),
 		&stepBhyve{
@@ -84,8 +92,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			ShutdownCommand: b.config.ShutdownCommand,
 			Comm:            &b.config.CommConfig.Comm,
 		},
-		&stepCreateSnapshot{},
 	)
+
+	if b.config.DiskUseZVOL {
+		steps = append(steps, &stepCreateSnapshot{})
+	}
 
 	// Run!
 	b.runner = commonsteps.NewRunnerWithPauseFn(steps, b.config.PackerConfig, ui, state)

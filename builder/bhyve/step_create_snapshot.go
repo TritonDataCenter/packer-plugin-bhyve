@@ -20,7 +20,7 @@ func (step *stepCreateSnapshot) Run(ctx context.Context, state multistep.StateBa
 	ui := state.Get("ui").(packer.Ui)
 
 	var stderr bytes.Buffer
-	snap_path := fmt.Sprintf("%s/packer0@final", config.ZPool)
+	snap_path := fmt.Sprintf("%s/%s@final", config.DiskZPool, config.DiskName)
 	file_path := filepath.Join(config.OutputDir, config.VMName)
 
 	ui.Say(fmt.Sprintf("Creating ZFS snapshot %s", snap_path))

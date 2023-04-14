@@ -24,7 +24,10 @@ type Config struct {
 
 	BootSteps      [][]string `mapstructure:"boot_steps" required:"false"`
 	CommConfig     CommConfig `mapstructure:",squash"`
+	DiskName       string     `mapstructure:"disk_name" required:"false"`
 	DiskSize       string     `mapstructure:"disk_size" required:"false"`
+	DiskUseZVOL    bool       `mapstructure:"disk_use_zvol" required:"false"`
+	DiskZPool      string     `mapstructure:"disk_zpool" required:"false"`
 	HostNIC        string     `mapstructure:"host_nic"`
 	OutputDir      string     `mapstructure:"output_directory" required:"false"`
 	VMName         string     `mapstructure:"vm_name" required:"false"`
@@ -33,7 +36,6 @@ type Config struct {
 	VNCPortMin     int        `mapstructure:"vnc_port_min" required:"false"`
 	VNCUsePassword bool       `mapstructure:"vnc_use_password" required:"false"`
 	VNICLink       string     `mapstructure:"vnic_link" required:"false"`
-	ZPool          string     `mapstructure:"zpool"`
 
 	ctx interpolate.Context
 }
@@ -68,8 +70,16 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	}
 	warnings = append(warnings, ccWarn...)
 
+	if c.DiskName == "" {
+		c.DiskName = fmt.Sprintf("disk-%s", c.PackerBuildName)
+	}
+
 	if c.DiskSize == "" {
 		errs = packer.MultiErrorAppend(errs, fmt.Errorf("disk_size must be specified"))
+	}
+
+	if c.DiskZPool == "" {
+		c.DiskZPool = "zones"
 	}
 
 	if c.OutputDir == "" {
@@ -118,10 +128,6 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 
 	if c.VNICLink == "" {
 		c.VNICLink = c.HostNIC
-	}
-
-	if c.ZPool == "" {
-		errs = packer.MultiErrorAppend(errs, fmt.Errorf("zpool must be specified"))
 	}
 
 	if errs != nil && len(errs.Errors) > 0 {

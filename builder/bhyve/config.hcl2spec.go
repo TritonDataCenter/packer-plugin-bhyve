@@ -88,7 +88,10 @@ type FlatConfig struct {
 	WinRMUseNTLM              *bool             `mapstructure:"winrm_use_ntlm" cty:"winrm_use_ntlm" hcl:"winrm_use_ntlm"`
 	HostPortMin               *int              `mapstructure:"host_port_min" required:"false" cty:"host_port_min" hcl:"host_port_min"`
 	HostPortMax               *int              `mapstructure:"host_port_max" required:"false" cty:"host_port_max" hcl:"host_port_max"`
+	DiskName                  *string           `mapstructure:"disk_name" required:"false" cty:"disk_name" hcl:"disk_name"`
 	DiskSize                  *string           `mapstructure:"disk_size" required:"false" cty:"disk_size" hcl:"disk_size"`
+	DiskUseZVOL               *bool             `mapstructure:"disk_use_zvol" required:"false" cty:"disk_use_zvol" hcl:"disk_use_zvol"`
+	DiskZPool                 *string           `mapstructure:"disk_zpool" required:"false" cty:"disk_zpool" hcl:"disk_zpool"`
 	HostNIC                   *string           `mapstructure:"host_nic" cty:"host_nic" hcl:"host_nic"`
 	OutputDir                 *string           `mapstructure:"output_directory" required:"false" cty:"output_directory" hcl:"output_directory"`
 	VMName                    *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
@@ -97,7 +100,6 @@ type FlatConfig struct {
 	VNCPortMin                *int              `mapstructure:"vnc_port_min" required:"false" cty:"vnc_port_min" hcl:"vnc_port_min"`
 	VNCUsePassword            *bool             `mapstructure:"vnc_use_password" required:"false" cty:"vnc_use_password" hcl:"vnc_use_password"`
 	VNICLink                  *string           `mapstructure:"vnic_link" required:"false" cty:"vnic_link" hcl:"vnic_link"`
-	ZPool                     *string           `mapstructure:"zpool" cty:"zpool" hcl:"zpool"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -190,7 +192,10 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"winrm_use_ntlm":               &hcldec.AttrSpec{Name: "winrm_use_ntlm", Type: cty.Bool, Required: false},
 		"host_port_min":                &hcldec.AttrSpec{Name: "host_port_min", Type: cty.Number, Required: false},
 		"host_port_max":                &hcldec.AttrSpec{Name: "host_port_max", Type: cty.Number, Required: false},
+		"disk_name":                    &hcldec.AttrSpec{Name: "disk_name", Type: cty.String, Required: false},
 		"disk_size":                    &hcldec.AttrSpec{Name: "disk_size", Type: cty.String, Required: false},
+		"disk_use_zvol":                &hcldec.AttrSpec{Name: "disk_use_zvol", Type: cty.Bool, Required: false},
+		"disk_zpool":                   &hcldec.AttrSpec{Name: "disk_zpool", Type: cty.String, Required: false},
 		"host_nic":                     &hcldec.AttrSpec{Name: "host_nic", Type: cty.String, Required: false},
 		"output_directory":             &hcldec.AttrSpec{Name: "output_directory", Type: cty.String, Required: false},
 		"vm_name":                      &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
@@ -199,7 +204,6 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"vnc_port_min":                 &hcldec.AttrSpec{Name: "vnc_port_min", Type: cty.Number, Required: false},
 		"vnc_use_password":             &hcldec.AttrSpec{Name: "vnc_use_password", Type: cty.Bool, Required: false},
 		"vnic_link":                    &hcldec.AttrSpec{Name: "vnic_link", Type: cty.String, Required: false},
-		"zpool":                        &hcldec.AttrSpec{Name: "zpool", Type: cty.String, Required: false},
 	}
 	return s
 }
