@@ -35,6 +35,7 @@ type Config struct {
 	VNCPortMax     int        `mapstructure:"vnc_port_max"`
 	VNCPortMin     int        `mapstructure:"vnc_port_min" required:"false"`
 	VNCUsePassword bool       `mapstructure:"vnc_use_password" required:"false"`
+	VNICName       string     `mapstructure:"vnic_name" required:"false"`
 	VNICLink       string     `mapstructure:"vnic_link" required:"false"`
 
 	ctx interpolate.Context
@@ -128,6 +129,10 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 
 	if c.VNICLink == "" {
 		c.VNICLink = c.HostNIC
+	}
+
+	if c.VNICName == "" {
+		c.VNICName = "packer0"
 	}
 
 	if errs != nil && len(errs.Errors) > 0 {

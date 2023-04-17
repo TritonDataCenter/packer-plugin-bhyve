@@ -24,6 +24,7 @@ type stepWaitGuestAddress struct {
 }
 
 func (s *stepWaitGuestAddress) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
+	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
@@ -31,7 +32,7 @@ func (s *stepWaitGuestAddress) Run(ctx context.Context, state multistep.StateBag
 
 	// Firstly get the VNIC MAC address, as this should be immediately
 	// available and not change.
-	vnic_mac := get_vnic_mac("packer0")
+	vnic_mac := get_vnic_mac(config.VNICName)
 	if vnic_mac == "" {
 		err := fmt.Errorf("Error getting VNIC MAC address")
 		state.Put("error", err)
