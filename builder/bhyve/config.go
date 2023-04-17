@@ -35,6 +35,7 @@ type Config struct {
 	VNCPortMax     int        `mapstructure:"vnc_port_max"`
 	VNCPortMin     int        `mapstructure:"vnc_port_min" required:"false"`
 	VNCUsePassword bool       `mapstructure:"vnc_use_password" required:"false"`
+	VNICCreate     bool       `mapstructure:"vnic_create" required:"false"`
 	VNICName       string     `mapstructure:"vnic_name" required:"false"`
 	VNICLink       string     `mapstructure:"vnic_link" required:"false"`
 

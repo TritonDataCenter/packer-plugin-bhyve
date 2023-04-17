@@ -69,8 +69,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		steps = append(steps, new(stepCreateDisk))
 	}
 
+	if b.config.VNICCreate {
+		steps = append(steps, new(stepCreateVNIC))
+	}
+
 	steps = append(steps,
-		new(stepCreateVNIC),
 		new(stepConfigureVNC),
 		&stepBhyve{
 			name: b.config.VMName,

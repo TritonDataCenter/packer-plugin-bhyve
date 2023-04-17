@@ -99,6 +99,7 @@ type FlatConfig struct {
 	VNCPortMax                *int              `mapstructure:"vnc_port_max" cty:"vnc_port_max" hcl:"vnc_port_max"`
 	VNCPortMin                *int              `mapstructure:"vnc_port_min" required:"false" cty:"vnc_port_min" hcl:"vnc_port_min"`
 	VNCUsePassword            *bool             `mapstructure:"vnc_use_password" required:"false" cty:"vnc_use_password" hcl:"vnc_use_password"`
+	VNICCreate                *bool             `mapstructure:"vnic_create" required:"false" cty:"vnic_create" hcl:"vnic_create"`
 	VNICName                  *string           `mapstructure:"vnic_name" required:"false" cty:"vnic_name" hcl:"vnic_name"`
 	VNICLink                  *string           `mapstructure:"vnic_link" required:"false" cty:"vnic_link" hcl:"vnic_link"`
 }
@@ -204,6 +205,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"vnc_port_max":                 &hcldec.AttrSpec{Name: "vnc_port_max", Type: cty.Number, Required: false},
 		"vnc_port_min":                 &hcldec.AttrSpec{Name: "vnc_port_min", Type: cty.Number, Required: false},
 		"vnc_use_password":             &hcldec.AttrSpec{Name: "vnc_use_password", Type: cty.Bool, Required: false},
+		"vnic_create":                  &hcldec.AttrSpec{Name: "vnic_create", Type: cty.Bool, Required: false},
 		"vnic_name":                    &hcldec.AttrSpec{Name: "vnic_name", Type: cty.String, Required: false},
 		"vnic_link":                    &hcldec.AttrSpec{Name: "vnic_link", Type: cty.String, Required: false},
 	}
