@@ -36,6 +36,10 @@ type FlatConfig struct {
 	BootKeyInterval           *string           `mapstructure:"boot_key_interval" cty:"boot_key_interval" hcl:"boot_key_interval"`
 	ShutdownCommand           *string           `mapstructure:"shutdown_command" required:"false" cty:"shutdown_command" hcl:"shutdown_command"`
 	ShutdownTimeout           *string           `mapstructure:"shutdown_timeout" required:"false" cty:"shutdown_timeout" hcl:"shutdown_timeout"`
+	CpuCount                  *int              `mapstructure:"cpus" required:"false" cty:"cpus" hcl:"cpus"`
+	SocketCount               *int              `mapstructure:"sockets" required:"false" cty:"sockets" hcl:"sockets"`
+	CoreCount                 *int              `mapstructure:"cores" required:"false" cty:"cores" hcl:"cores"`
+	ThreadCount               *int              `mapstructure:"threads" required:"false" cty:"threads" hcl:"threads"`
 	BootSteps                 [][]string        `mapstructure:"boot_steps" required:"false" cty:"boot_steps" hcl:"boot_steps"`
 	Type                      *string           `mapstructure:"communicator" cty:"communicator" hcl:"communicator"`
 	PauseBeforeConnect        *string           `mapstructure:"pause_before_connecting" cty:"pause_before_connecting" hcl:"pause_before_connecting"`
@@ -143,6 +147,10 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"boot_key_interval":            &hcldec.AttrSpec{Name: "boot_key_interval", Type: cty.String, Required: false},
 		"shutdown_command":             &hcldec.AttrSpec{Name: "shutdown_command", Type: cty.String, Required: false},
 		"shutdown_timeout":             &hcldec.AttrSpec{Name: "shutdown_timeout", Type: cty.String, Required: false},
+		"cpus":                         &hcldec.AttrSpec{Name: "cpus", Type: cty.Number, Required: false},
+		"sockets":                      &hcldec.AttrSpec{Name: "sockets", Type: cty.Number, Required: false},
+		"cores":                        &hcldec.AttrSpec{Name: "cores", Type: cty.Number, Required: false},
+		"threads":                      &hcldec.AttrSpec{Name: "threads", Type: cty.Number, Required: false},
 		"boot_steps":                   &hcldec.AttrSpec{Name: "boot_steps", Type: cty.List(cty.List(cty.String)), Required: false},
 		"communicator":                 &hcldec.AttrSpec{Name: "communicator", Type: cty.String, Required: false},
 		"pause_before_connecting":      &hcldec.AttrSpec{Name: "pause_before_connecting", Type: cty.String, Required: false},

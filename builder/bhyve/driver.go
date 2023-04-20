@@ -46,7 +46,7 @@ func (d *BhyveDriver) Start() error {
 	common_args := []string{
 		"-D",
 		"-H",
-		"-c", "1",
+		"-c", d.config.CPUConfig.cmdline(),
 		"-l", "bootrom,/usr/share/bhyve/uefi-rom.bin",
 		"-m", strconv.Itoa(d.config.MemorySize),
 		"-s", fmt.Sprintf("%d,hostbridge,model=i440fx", SlotHostBridge),

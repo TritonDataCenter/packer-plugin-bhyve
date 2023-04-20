@@ -16,12 +16,81 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 )
 
+type CPUConfig struct {
+	CpuCount    int `mapstructure:"cpus" required:"false"`
+	SocketCount int `mapstructure:"sockets" required:"false"`
+	CoreCount   int `mapstructure:"cores" required:"false"`
+	ThreadCount int `mapstructure:"threads" required:"false"`
+}
+
+func (c CPUConfig) cmdline() string {
+	totalVCpus := c.getMaxCPUs()
+	if totalVCpus == 0 && c.CpuCount == 0 {
+		return "1"
+	}
+
+	cpuCount := c.CpuCount
+
+	if cpuCount == 0 {
+		log.Printf("CPU count at default value, setting to topology maximum: %d", totalVCpus)
+		cpuCount = totalVCpus
+	}
+
+	if totalVCpus > cpuCount {
+		log.Print("CPU count lower than what's described in topology." +
+			"This will negatively impact performance.")
+	}
+
+	if cpuCount > totalVCpus && totalVCpus != 0 {
+		log.Printf("CPU count is greater than what topology allows, setting to max CPU count of the provided topology: %d", totalVCpus)
+		cpuCount = totalVCpus
+	}
+
+	cpustr := fmt.Sprintf("cpus=%d", cpuCount)
+	if c.SocketCount > 0 {
+		cpustr = fmt.Sprintf("%s,sockets=%d", cpustr, c.SocketCount)
+	}
+	if c.CoreCount > 0 {
+		cpustr = fmt.Sprintf("%s,cores=%d", cpustr, c.CoreCount)
+	}
+	if c.ThreadCount > 0 {
+		cpustr = fmt.Sprintf("%s,threads=%d", cpustr, c.ThreadCount)
+	}
+
+	return cpustr
+}
+
+func (c CPUConfig) getMaxCPUs() int {
+	totalVCPUs := c.SocketCount
+
+	if c.CoreCount > 0 && totalVCPUs > 0 {
+		totalVCPUs *= c.CoreCount
+	}
+
+	// If number of sockets were not provided take the number of cores
+	if totalVCPUs == 0 {
+		totalVCPUs = c.CoreCount
+	}
+
+	if c.ThreadCount > 0 && totalVCPUs != 0 {
+		totalVCPUs *= c.ThreadCount
+	}
+
+	// If nothing else was provided, return the thread count
+	if totalVCPUs == 0 {
+		totalVCPUs = c.ThreadCount
+	}
+
+	return totalVCPUs
+}
+
 type Config struct {
 	common.PackerConfig            `mapstructure:",squash"`
 	commonsteps.HTTPConfig         `mapstructure:",squash"`
 	commonsteps.ISOConfig          `mapstructure:",squash"`
 	bootcommand.VNCConfig          `mapstructure:",squash"`
 	shutdowncommand.ShutdownConfig `mapstructure:",squash"`
+	CPUConfig                      `mapstructure:",squash"`
 
 	BootSteps      [][]string `mapstructure:"boot_steps" required:"false"`
 	CommConfig     CommConfig `mapstructure:",squash"`
