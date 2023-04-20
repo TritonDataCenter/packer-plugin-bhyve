@@ -93,6 +93,7 @@ type FlatConfig struct {
 	DiskUseZVOL               *bool             `mapstructure:"disk_use_zvol" required:"false" cty:"disk_use_zvol" hcl:"disk_use_zvol"`
 	DiskZPool                 *string           `mapstructure:"disk_zpool" required:"false" cty:"disk_zpool" hcl:"disk_zpool"`
 	HostNIC                   *string           `mapstructure:"host_nic" cty:"host_nic" hcl:"host_nic"`
+	MemorySize                *int              `mapstructure:"memory" required:"false" cty:"memory" hcl:"memory"`
 	OutputDir                 *string           `mapstructure:"output_directory" required:"false" cty:"output_directory" hcl:"output_directory"`
 	VMName                    *string           `mapstructure:"vm_name" required:"false" cty:"vm_name" hcl:"vm_name"`
 	VNCBindAddress            *string           `mapstructure:"vnc_bind_address" required:"false" cty:"vnc_bind_address" hcl:"vnc_bind_address"`
@@ -199,6 +200,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"disk_use_zvol":                &hcldec.AttrSpec{Name: "disk_use_zvol", Type: cty.Bool, Required: false},
 		"disk_zpool":                   &hcldec.AttrSpec{Name: "disk_zpool", Type: cty.String, Required: false},
 		"host_nic":                     &hcldec.AttrSpec{Name: "host_nic", Type: cty.String, Required: false},
+		"memory":                       &hcldec.AttrSpec{Name: "memory", Type: cty.Number, Required: false},
 		"output_directory":             &hcldec.AttrSpec{Name: "output_directory", Type: cty.String, Required: false},
 		"vm_name":                      &hcldec.AttrSpec{Name: "vm_name", Type: cty.String, Required: false},
 		"vnc_bind_address":             &hcldec.AttrSpec{Name: "vnc_bind_address", Type: cty.String, Required: false},

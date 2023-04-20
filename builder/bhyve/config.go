@@ -4,6 +4,7 @@ package bhyve
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/hashicorp/packer-plugin-sdk/bootcommand"
@@ -29,6 +30,7 @@ type Config struct {
 	DiskUseZVOL    bool       `mapstructure:"disk_use_zvol" required:"false"`
 	DiskZPool      string     `mapstructure:"disk_zpool" required:"false"`
 	HostNIC        string     `mapstructure:"host_nic"`
+	MemorySize     int        `mapstructure:"memory" required:"false"`
 	OutputDir      string     `mapstructure:"output_directory" required:"false"`
 	VMName         string     `mapstructure:"vm_name" required:"false"`
 	VNCBindAddress string     `mapstructure:"vnc_bind_address" required:"false"`
@@ -82,6 +84,11 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 
 	if c.DiskZPool == "" {
 		c.DiskZPool = "zones"
+	}
+
+	if c.MemorySize < 10 {
+		log.Printf("MemorySize %d is too small, using default: 512", c.MemorySize)
+		c.MemorySize = 512
 	}
 
 	if c.OutputDir == "" {

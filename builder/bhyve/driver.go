@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"strconv"
 	"sync"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -47,7 +48,7 @@ func (d *BhyveDriver) Start() error {
 		"-H",
 		"-c", "1",
 		"-l", "bootrom,/usr/share/bhyve/uefi-rom.bin",
-		"-m", "1024",
+		"-m", strconv.Itoa(d.config.MemorySize),
 		"-s", fmt.Sprintf("%d,hostbridge,model=i440fx", SlotHostBridge),
 		"-s", fmt.Sprintf("%d,virtio-blk,%s",
 			SlotBootDisk, d.state.Get("bhyve_disk_path").(string)),
