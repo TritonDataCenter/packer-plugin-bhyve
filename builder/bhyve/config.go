@@ -88,6 +88,7 @@ type Config struct {
 	common.PackerConfig            `mapstructure:",squash"`
 	commonsteps.HTTPConfig         `mapstructure:",squash"`
 	commonsteps.ISOConfig          `mapstructure:",squash"`
+	commonsteps.CDConfig           `mapstructure:",squash"`
 	bootcommand.VNCConfig          `mapstructure:",squash"`
 	shutdowncommand.ShutdownConfig `mapstructure:",squash"`
 	CPUConfig                      `mapstructure:",squash"`
@@ -187,6 +188,7 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 		c.VNCPortMax = 6000
 	}
 
+	errs = packer.MultiErrorAppend(errs, c.CDConfig.Prepare(&c.ctx)...)
 	errs = packer.MultiErrorAppend(errs, c.VNCConfig.Prepare(&c.ctx)...)
 
 	if c.VNCPortMin < 5900 {

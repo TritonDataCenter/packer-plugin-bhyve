@@ -59,6 +59,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			Url:         b.config.ISOUrls,
 		},
 		new(stepPrepareOutputDir),
+		&commonsteps.StepCreateCD{
+			Files:   b.config.CDConfig.CDFiles,
+			Content: b.config.CDConfig.CDContent,
+			Label:   b.config.CDConfig.CDLabel,
+		},
 		new(stepHTTPIPDiscover),
 		commonsteps.HTTPServerFromHTTPConfig(&b.config.HTTPConfig),
 	)
