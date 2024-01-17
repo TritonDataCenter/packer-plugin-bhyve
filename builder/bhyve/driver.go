@@ -63,13 +63,8 @@ func (d *BhyveDriver) Start() error {
 		"-s", fmt.Sprintf("%d,lpc", SlotLPC),
 	}
 
-	boot_cd_args := []string{}
-	boot_cd_args = append(boot_cd_args,
-		"-s", fmt.Sprintf("%d,ahci-cd,%s", SlotCDROM,
-			d.state.Get("iso_path").(string)),
-	)
-
-	// cd_path is generated if cd_files is specified
+	// cd_path is generated if cd_files is specified, use it for both the
+	// initial boot and post-reboot.
 	extra_cd_path, ok := d.state.Get("cd_path").(string)
 	if ok && extra_cd_path != "" {
 		common_args = append(common_args,
@@ -80,12 +75,17 @@ func (d *BhyveDriver) Start() error {
 	// Set up two argument lists, one for the initial install with the boot
 	// CDROM attached, and one without, to ensure that we boot from disk
 	// for the post-install steps.
-	var boot_args []string = append(common_args)
-	boot_args = append(boot_args, boot_cd_args[:]...)
-	boot_args = append(boot_args, d.config.VMName)
+	boot_args := []string{}
+	boot_args = append(boot_args, common_args...)
+	boot_args = append(boot_args,
+		"-s", fmt.Sprintf("%d,ahci-cd,%s", SlotCDROM,
+			d.state.Get("iso_path").(string)),
+		d.config.VMName,
+	)
 
-	var reboot_args []string = append(
-		common_args,
+	reboot_args := []string{}
+	reboot_args = append(reboot_args, common_args...)
+	reboot_args = append(reboot_args,
 		d.config.VMName,
 	)
 
