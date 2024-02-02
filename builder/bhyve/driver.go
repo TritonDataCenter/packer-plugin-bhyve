@@ -144,7 +144,7 @@ func (d *BhyveDriver) Start() error {
 					if rc == 1 || rc == 2 {
 						rc = 0
 					} else {
-						errCh <- fmt.Errorf("%s", stderr)
+						errCh <- fmt.Errorf("%s", strings.TrimSpace(stderr.String()))
 					}
 				}
 				break
