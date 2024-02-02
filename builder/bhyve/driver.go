@@ -1,11 +1,13 @@
 package bhyve
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os/exec"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 )
@@ -20,7 +22,8 @@ type BhyveDriver struct {
 	config  *Config
 	state   multistep.StateBag
 	vmCmd   *exec.Cmd
-	vmEndCh <-chan int
+	vmRetCh <-chan int
+	vmErrCh <-chan error
 	lock    sync.Mutex
 }
 
@@ -89,68 +92,87 @@ func (d *BhyveDriver) Start() error {
 		d.config.VMName,
 	)
 
-	log.Printf("Starting bhyve VM %s", d.config.VMName)
-	log.Printf("boot_args %v", boot_args)
-	log.Printf("reboot_args %v", reboot_args)
-
-	cmd := exec.Command("/usr/sbin/bhyve", boot_args...)
-	if err := cmd.Start(); err != nil {
-		err = fmt.Errorf("Error starting VM: %s", err)
-		return err
-	}
-
 	// bhyve exits when a VM reboots which is a bit annoying in this
 	// context.  We need to check for this and restart it on success so
-	// that the post-install provisioning step can run.  Once complete
+	// that any post-install provisioning steps can run.  Once complete
 	// the VM is powered off which is a non-zero exit status.
-	endCh := make(chan int, 1)
-	go func() {
-		var rc int = 0
-		if err := cmd.Wait(); err == nil {
-			log.Printf("Restarting bhyve VM %s after reboot", d.config.VMName)
-			cmd2 := exec.Command("/usr/sbin/bhyve", reboot_args...)
-			if err := cmd2.Start(); err != nil {
-				// XXX: Report this as failing to packer
-				log.Printf("Error restarting VM: %s", err)
-			}
-			d.lock.Lock()
-			d.vmCmd = cmd2
-			d.lock.Unlock()
+	retCh := make(chan int, 1)
+	errCh := make(chan error, 1)
+	var cmd *exec.Cmd
 
-			// Wait for the restarted bhyve to exit.  A successful
-			// exit here is one that has a status code of 1 which
-			// Bhyve uses to indicate a VM shutdown.
-			err := cmd2.Wait()
-			if err == nil {
-				// XXX: Report this as failing to packer
-				log.Printf("Bhyve rebooted unexpectedly ?")
-				rc = 254
+	go func() {
+		var first bool = true
+		var rc int = 0
+		var stderr bytes.Buffer
+
+		for {
+			if first {
+				log.Printf("Starting bhyve VM %s", d.config.VMName)
+				log.Printf("boot_args %v", boot_args)
+				cmd = exec.Command("/usr/sbin/bhyve", boot_args...)
 			} else {
-				// Replace bhyve's "success" of 1 with a proper
-				// exit of 0.
+				log.Printf("Restarting bhyve VM %s after reboot", d.config.VMName)
+				log.Printf("reboot_args %v", reboot_args)
+				cmd = exec.Command("/usr/sbin/bhyve", reboot_args...)
+			}
+			cmd.Stderr = &stderr
+
+			if err := cmd.Start(); err != nil {
+				if first {
+					errCh <- fmt.Errorf("Error starting VM: %s", err)
+				} else {
+					errCh <- fmt.Errorf("Error restarting VM: %s", err)
+				}
+				rc = 1
+				break
+			}
+
+			first = false
+			err := cmd.Wait()
+
+			// 0 = rebooted
+			// 1 = powered off
+			// 2 = halted
+			// 3 = triple fault
+			// 4 = exited due to an error
+			if err == nil {
+				continue
+			} else {
 				if status, ok := err.(*exec.ExitError); ok {
 					rc = status.ExitCode()
-					if rc == 1 {
+					// convert power off or halt to success
+					if rc == 1 || rc == 2 {
 						rc = 0
+					} else {
+						errCh <- fmt.Errorf("%s", stderr)
 					}
 				}
-			}
-		} else {
-			// XXX: Report this as failing to packer
-			log.Printf("Bhyve exited unexpectedly ?")
-			if status, ok := err.(*exec.ExitError); ok {
-				rc = status.ExitCode()
+				break
 			}
 		}
-		endCh <- rc
+		retCh <- rc
+
 		d.lock.Lock()
 		defer d.lock.Unlock()
+
 		d.vmCmd = nil
-		d.vmEndCh = nil
+		d.vmRetCh = nil
+		d.vmErrCh = nil
 	}()
 
+	// Give bhyve a few seconds to start up to catch errors
+	select {
+	case exit := <-retCh:
+		if exit != 0 {
+			res := <-errCh
+			return res
+		}
+	case <-time.After(2 * time.Second):
+	}
+
+	d.vmRetCh = retCh
+	d.vmErrCh = errCh
 	d.vmCmd = cmd
-	d.vmEndCh = endCh
 
 	return nil
 }
@@ -170,15 +192,15 @@ func (d *BhyveDriver) Stop() error {
 
 func (d *BhyveDriver) WaitForShutdown(cancelCh <-chan struct{}) bool {
 	d.lock.Lock()
-	endCh := d.vmEndCh
+	retCh := d.vmRetCh
 	d.lock.Unlock()
 
-	if endCh == nil {
+	if retCh == nil {
 		return true
 	}
 
 	select {
-	case <-endCh:
+	case <-retCh:
 		return true
 	case <-cancelCh:
 		return false
