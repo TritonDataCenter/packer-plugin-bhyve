@@ -11,6 +11,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/cenkalti/backoff/v5"
 	"github.com/hashicorp/packer-plugin-sdk/bootcommand"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
@@ -68,6 +69,30 @@ func typeBootCommands(ctx context.Context, state multistep.StateBag, bootSteps [
 		return multistep.ActionContinue
 	}
 
+	var pauseFn multistep.DebugPauseFn
+	if debug {
+		pauseFn = state.Get("pauseFn").(multistep.DebugPauseFn)
+	}
+
+	// Connect to VNC
+	ui.Say(fmt.Sprintf("Connecting to VM via VNC (%s:%d)", vncIP, vncPort))
+	dialVnc := func() (net.Conn, error) {
+		nc, err := net.Dial("tcp", fmt.Sprintf("%s:%d", vncIP, vncPort))
+		if err != nil {
+			log.Printf("TCP Connection to VNC Socket Errored: \"%s\"... VNC may not be ready yet... retrying\n", err.Error())
+			return nil, err
+		}
+		return nc, nil
+	}
+	nc, err := backoff.Retry(ctx, dialVnc, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+	if err != nil {
+		err := fmt.Errorf("Error connecting to VNC: %s", err)
+		state.Put("error", err)
+		ui.Error(err.Error())
+		return multistep.ActionHalt
+	}
+	defer nc.Close()
+
 	// Wait the for the vm to boot.
 	if int64(config.BootWait) > 0 {
 		ui.Say(fmt.Sprintf("Waiting %s for boot...", config.BootWait))
@@ -79,23 +104,6 @@ func typeBootCommands(ctx context.Context, state multistep.StateBag, bootSteps [
 		}
 	}
 
-	var pauseFn multistep.DebugPauseFn
-	if debug {
-		pauseFn = state.Get("pauseFn").(multistep.DebugPauseFn)
-	}
-
-	// Connect to VNC
-	ui.Say(fmt.Sprintf("Connecting to VM via VNC (%s:%d)", vncIP, vncPort))
-
-	nc, err := net.Dial("tcp", fmt.Sprintf("%s:%d", vncIP, vncPort))
-	if err != nil {
-		err := fmt.Errorf("Error connecting to VNC: %s", err)
-		state.Put("error", err)
-		ui.Error(err.Error())
-		return multistep.ActionHalt
-	}
-	defer nc.Close()
-
 	var auth []vnc.ClientAuth
 
 	if vncPassword != nil && len(vncPassword.(string)) > 0 {
@@ -104,7 +112,16 @@ func typeBootCommands(ctx context.Context, state multistep.StateBag, bootSteps [
 		auth = []vnc.ClientAuth{new(vnc.ClientAuthNone)}
 	}
 
-	c, err := vnc.Client(nc, &vnc.ClientConfig{Auth: auth, Exclusive: false})
+	vncClient := func() (*vnc.ClientConn, error) {
+		c, err := vnc.Client(nc, &vnc.ClientConfig{Auth: auth, Exclusive: false})
+		if err != nil {
+			log.Printf("VNC Client Connection Errored: \"%s\"... retrying\n", err.Error())
+			return nil, err
+		}
+		return c, nil
+	}
+
+	c, err := backoff.Retry(ctx, vncClient, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 	if err != nil {
 		err := fmt.Errorf("Error handshaking with VNC: %s", err)
 		state.Put("error", err)

@@ -1,14 +1,19 @@
 package bhyve
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 )
@@ -35,6 +40,11 @@ func (d *BhyveDriver) Start() error {
 	if d.vmCmd != nil {
 		panic("Existing VM state found")
 	}
+	serialLog := false
+
+	if d.config.SerialLogFile || d.config.SerialLogUi {
+		serialLog = true
+	}
 
 	// Use the same slots as pci_slot_t in
 	// illumos-joyent usr/src/lib/brand/bhyve/zone/boot.c
@@ -59,10 +69,6 @@ func (d *BhyveDriver) Start() error {
 			SlotBootDisk, d.state.Get("bhyve_disk_path").(string)),
 		"-s", fmt.Sprintf("%d,virtio-net-viona,vnic=%s",
 			SlotNIC, d.config.VNICName),
-		"-s", fmt.Sprintf("%d:0,fbuf,vga=off,rfb=%s:%d,password=%s",
-			SlotFBuf, d.config.VNCBindAddress,
-			d.state.Get("vnc_port").(int),
-			d.state.Get("vnc_password").(string)),
 		"-s", fmt.Sprintf("%d:1,xhci,tablet", SlotFBuf),
 		"-s", fmt.Sprintf("%d,lpc", SlotLPC),
 	}
@@ -76,12 +82,22 @@ func (d *BhyveDriver) Start() error {
 				extra_cd_path))
 	}
 
+	// Lets try to capture serial output
+	if serialLog {
+		common_args = append(common_args,
+			"-l", fmt.Sprintf("%s,stdio", d.config.SerialLogPort))
+	}
+
 	// Set up two argument lists, one for the initial install with the boot
 	// CDROM attached, and one without, to ensure that we boot from disk
 	// for the post-install steps.
 	boot_args := []string{}
 	boot_args = append(boot_args, common_args...)
 	boot_args = append(boot_args,
+		"-s", fmt.Sprintf("%d:0,fbuf,vga=off,rfb=%s:%d,password=%s,wait",
+			SlotFBuf, d.config.VNCBindAddress,
+			d.state.Get("vnc_port").(int),
+			d.state.Get("vnc_password").(string)),
 		"-s", fmt.Sprintf("%d,ahci-cd,%s", SlotCDROM,
 			d.state.Get("iso_path").(string)),
 		d.config.VMName,
@@ -89,6 +105,12 @@ func (d *BhyveDriver) Start() error {
 
 	reboot_args := []string{}
 	reboot_args = append(reboot_args, common_args...)
+	reboot_args = append(reboot_args,
+		"-s", fmt.Sprintf("%d:0,fbuf,vga=off,rfb=%s:%d,password=%s",
+			SlotFBuf, d.config.VNCBindAddress,
+			d.state.Get("vnc_port").(int),
+			d.state.Get("vnc_password").(string)),
+	)
 	reboot_args = append(reboot_args,
 		d.config.VMName,
 	)
@@ -100,6 +122,7 @@ func (d *BhyveDriver) Start() error {
 	retCh := make(chan int, 1)
 	errCh := make(chan error, 1)
 	var cmd *exec.Cmd
+	stdout_r, stdout_w := io.Pipe()
 
 	go func() {
 		var first bool = true
@@ -116,6 +139,7 @@ func (d *BhyveDriver) Start() error {
 				log.Printf("reboot_args %v", reboot_args)
 				cmd = exec.Command("/usr/sbin/bhyve", reboot_args...)
 			}
+			cmd.Stdout = stdout_w
 			cmd.Stderr = &stderr
 
 			if err := cmd.Start(); err != nil {
@@ -128,6 +152,10 @@ func (d *BhyveDriver) Start() error {
 				break
 			}
 
+			if serialLog {
+				go logReader("Bhyve Stdout", stdout_r, d.config.SerialLogFile, d.config.SerialLogUi)
+			}
+
 			first = false
 			err := cmd.Wait()
 
@@ -137,10 +165,22 @@ func (d *BhyveDriver) Start() error {
 			// 3 = triple fault
 			// 4 = exited due to an error
 			if err == nil {
+				log.Printf("Bhyve Returned 0: Reboot")
 				continue
 			} else {
 				if status, ok := err.(*exec.ExitError); ok {
 					rc = status.ExitCode()
+					// Log Return values
+					switch rc {
+					case 1:
+						log.Printf("Bhyve Returned 1: Powered Off")
+					case 2:
+						log.Printf("Bhyve Returned 2: Halted")
+					case 3:
+						log.Printf("Bhyve Returned 3: Triple Fault")
+					case 4:
+						log.Printf("Bhyve Returned 4: Errored")
+					}
 					// convert power off or halt to success
 					if rc == 1 || rc == 2 {
 						rc = 0
@@ -205,5 +245,51 @@ func (d *BhyveDriver) WaitForShutdown(cancelCh <-chan struct{}) bool {
 		return true
 	case <-cancelCh:
 		return false
+	}
+}
+
+// Errors in logReader will not stop a build just log error and return
+func logReader(name string, r io.Reader, logToFile, logToUi bool) {
+	bufR := bufio.NewReader(r)
+
+	// Handle Serial Port Logging
+	serialLogPath := filepath.Join(
+		os.TempDir(),
+		fmt.Sprintf(
+			"packer-bhyve-serial-%s.log",
+			time.Now().Format("2006-01-02_15-04-05"),
+		),
+	)
+
+	var logFile *os.File
+	if logToFile {
+		f, err := os.Create(serialLogPath)
+		if err != nil {
+			log.Printf("Error creating log file at: %s: %s", serialLogPath, err)
+			return
+		}
+		logFile = f
+	}
+
+	for {
+		line, err := bufR.ReadString('\n')
+		if line != "" {
+			trimmedLine := strings.TrimRightFunc(line, unicode.IsSpace)
+			// Log to Packer
+			if logToUi {
+				log.Printf("%s: %s", name, trimmedLine)
+			}
+			// Log to File
+			if logToFile {
+				if _, err := io.WriteString(logFile, line); err != nil {
+					log.Printf("%s: error writing to file: %v", name, err)
+					return
+				}
+			}
+		}
+
+		if err == io.EOF {
+			break
+		}
 	}
 }
