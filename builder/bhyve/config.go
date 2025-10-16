@@ -110,11 +110,16 @@ type Config struct {
 	VNICCreate     bool       `mapstructure:"vnic_create" required:"false"`
 	VNICName       string     `mapstructure:"vnic_name" required:"false"`
 	VNICLink       string     `mapstructure:"vnic_link" required:"false"`
+	// Logs Bhyve VM Serial to Log File
+	SerialLogFile bool `mapstructure:"serial_log_file" required:"false"`
+	// Logs Bhyve VM Serial to User interface
+	SerialLogUi   bool   `mapstructure:"serial_log_ui" required:"false"`
+	SerialLogPort string `mapstructure:"serial_log_port" required:"false"`
 
 	ctx interpolate.Context
 }
 
-func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
+func (c *Config) Prepare(raws ...any) ([]string, error) {
 	err := config.Decode(c, &config.DecodeOpts{
 		PluginType:         BuilderId,
 		Interpolate:        true,
@@ -214,9 +219,27 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 		c.VNICName = "packer0"
 	}
 
+	if c.SerialLogPort != "" {
+		if !serialPortCheck(c.SerialLogPort) {
+			errs = packer.MultiErrorAppend(
+				errs, fmt.Errorf("serial_log_port must be \"com1\", \"com2\", \"com3\", or \"com4\""))
+		}
+	} else {
+		c.SerialLogPort = "com1"
+	}
+
 	if errs != nil && len(errs.Errors) > 0 {
 		return warnings, errs
 	}
 
 	return warnings, nil
+}
+
+func serialPortCheck(portName string) bool {
+	for i := range 4 {
+		if portName == fmt.Sprintf("com%d", i+1) {
+			return true
+		}
+	}
+	return false
 }

@@ -24,6 +24,7 @@ type FlatConfig struct {
 	HTTPPortMax               *int              `mapstructure:"http_port_max" cty:"http_port_max" hcl:"http_port_max"`
 	HTTPAddress               *string           `mapstructure:"http_bind_address" cty:"http_bind_address" hcl:"http_bind_address"`
 	HTTPInterface             *string           `mapstructure:"http_interface" undocumented:"true" cty:"http_interface" hcl:"http_interface"`
+	HTTPNetworkProtocol       *string           `mapstructure:"http_network_protocol" cty:"http_network_protocol" hcl:"http_network_protocol"`
 	ISOChecksum               *string           `mapstructure:"iso_checksum" required:"true" cty:"iso_checksum" hcl:"iso_checksum"`
 	RawSingleISOUrl           *string           `mapstructure:"iso_url" required:"true" cty:"iso_url" hcl:"iso_url"`
 	ISOUrls                   []string          `mapstructure:"iso_urls" cty:"iso_urls" hcl:"iso_urls"`
@@ -110,6 +111,9 @@ type FlatConfig struct {
 	VNICCreate                *bool             `mapstructure:"vnic_create" required:"false" cty:"vnic_create" hcl:"vnic_create"`
 	VNICName                  *string           `mapstructure:"vnic_name" required:"false" cty:"vnic_name" hcl:"vnic_name"`
 	VNICLink                  *string           `mapstructure:"vnic_link" required:"false" cty:"vnic_link" hcl:"vnic_link"`
+	SerialLogFile             *bool             `mapstructure:"serial_log_file" required:"false" cty:"serial_log_file" hcl:"serial_log_file"`
+	SerialLogUi               *bool             `mapstructure:"serial_log_ui" required:"false" cty:"serial_log_ui" hcl:"serial_log_ui"`
+	SerialLogPort             *string           `mapstructure:"serial_log_port" required:"false" cty:"serial_log_port" hcl:"serial_log_port"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -138,6 +142,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"http_port_max":                &hcldec.AttrSpec{Name: "http_port_max", Type: cty.Number, Required: false},
 		"http_bind_address":            &hcldec.AttrSpec{Name: "http_bind_address", Type: cty.String, Required: false},
 		"http_interface":               &hcldec.AttrSpec{Name: "http_interface", Type: cty.String, Required: false},
+		"http_network_protocol":        &hcldec.AttrSpec{Name: "http_network_protocol", Type: cty.String, Required: false},
 		"iso_checksum":                 &hcldec.AttrSpec{Name: "iso_checksum", Type: cty.String, Required: false},
 		"iso_url":                      &hcldec.AttrSpec{Name: "iso_url", Type: cty.String, Required: false},
 		"iso_urls":                     &hcldec.AttrSpec{Name: "iso_urls", Type: cty.List(cty.String), Required: false},
@@ -224,6 +229,9 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"vnic_create":                  &hcldec.AttrSpec{Name: "vnic_create", Type: cty.Bool, Required: false},
 		"vnic_name":                    &hcldec.AttrSpec{Name: "vnic_name", Type: cty.String, Required: false},
 		"vnic_link":                    &hcldec.AttrSpec{Name: "vnic_link", Type: cty.String, Required: false},
+		"serial_log_file":              &hcldec.AttrSpec{Name: "serial_log_file", Type: cty.Bool, Required: false},
+		"serial_log_ui":                &hcldec.AttrSpec{Name: "serial_log_ui", Type: cty.Bool, Required: false},
+		"serial_log_port":              &hcldec.AttrSpec{Name: "serial_log_port", Type: cty.String, Required: false},
 	}
 	return s
 }
