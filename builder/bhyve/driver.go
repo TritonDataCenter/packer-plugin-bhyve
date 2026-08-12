@@ -57,15 +57,22 @@ func (d *BhyveDriver) Start() error {
 		"-s", fmt.Sprintf("%d,hostbridge,model=i440fx", SlotHostBridge),
 		"-s", fmt.Sprintf("%d,virtio-blk,%s",
 			SlotBootDisk, d.state.Get("bhyve_disk_path").(string)),
-		"-s", fmt.Sprintf("%d,virtio-net-viona,vnic=%s",
-			SlotNIC, d.config.VNICName),
+	}
+
+	if d.config.hasNIC() {
+		common_args = append(common_args,
+			"-s", fmt.Sprintf("%d,virtio-net-viona,vnic=%s",
+				SlotNIC, d.config.VNICName))
+	}
+
+	common_args = append(common_args,
 		"-s", fmt.Sprintf("%d:0,fbuf,vga=off,rfb=%s:%d,password=%s",
 			SlotFBuf, d.config.VNCBindAddress,
 			d.state.Get("vnc_port").(int),
 			d.state.Get("vnc_password").(string)),
 		"-s", fmt.Sprintf("%d:1,xhci,tablet", SlotFBuf),
 		"-s", fmt.Sprintf("%d,lpc", SlotLPC),
-	}
+	)
 
 	// cd_path is generated if cd_files is specified, use it for both the
 	// initial boot and post-reboot.

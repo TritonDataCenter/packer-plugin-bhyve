@@ -114,6 +114,10 @@ type Config struct {
 	ctx interpolate.Context
 }
 
+func (c *Config) hasNIC() bool {
+	return c.VNICLink != ""
+}
+
 func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	err := config.Decode(c, &config.DecodeOpts{
 		PluginType:         BuilderId,
@@ -137,6 +141,10 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 	warnings = append(warnings, isoWarnings...)
 	errs = packer.MultiErrorAppend(errs, isoErrs...)
 	errs = packer.MultiErrorAppend(errs, c.HTTPConfig.Prepare(&c.ctx)...)
+	if c.HTTPDir != "" && c.HostNIC == "" {
+		errs = packer.MultiErrorAppend(
+			errs, fmt.Errorf("http_directory and an empty host_nic are incompatible"))
+	}
 	errs = packer.MultiErrorAppend(errs, c.ShutdownConfig.Prepare(&c.ctx)...)
 	ccWarn, ccErr := c.CommConfig.Prepare(&c.ctx)
 	if len(ccErr) > 0 {
