@@ -17,4 +17,6 @@ sense in a bhyve context.
 Variables introduced for bhyve support are:
 
 * `host_nic`: The host NIC on which we create a VNIC for the virtual machine to
-  use, as well as listen on for the Packer HTTP server.
+  use, as well as listen on for the Packer HTTP server. If neither it nor
+  `vnic_link` is set, no guest NIC is attached. `host_nic` must be set when
+  using `http_directory`.

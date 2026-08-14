@@ -18,6 +18,11 @@ func (s *stepHTTPIPDiscover) Run(ctx context.Context, state multistep.StateBag) 
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
+	if config.HostNIC == "" {
+		state.Put("http_ip", "")
+		return multistep.ActionContinue
+	}
+
 	hostIP := ""
 
 	nic, err := net.InterfaceByName(config.HostNIC)

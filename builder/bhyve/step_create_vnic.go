@@ -14,12 +14,18 @@ import (
 )
 
 type stepCreateVNIC struct {
-	name string
+	name    string
+	created bool
 }
 
 func (step *stepCreateVNIC) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
+
+	if !config.hasNIC() {
+		ui.Say("No NIC will be attached because host_nic was not set")
+		return multistep.ActionContinue
+	}
 
 	args := []string{
 		"create-vnic",
@@ -40,10 +46,15 @@ func (step *stepCreateVNIC) Run(ctx context.Context, state multistep.StateBag) m
 		return multistep.ActionHalt
 	}
 
+	step.created = true
 	return multistep.ActionContinue
 }
 
 func (step *stepCreateVNIC) Cleanup(state multistep.StateBag) {
+	if !step.created {
+		return
+	}
+
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 

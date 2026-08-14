@@ -84,9 +84,15 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			name: b.config.VMName,
 		},
 		&stepTypeBootCommand{},
-		&stepWaitGuestAddress{
+	)
+
+	if b.config.hasNIC() {
+		steps = append(steps, &stepWaitGuestAddress{
 			timeout: tm,
-		},
+		})
+	}
+
+	steps = append(steps,
 		&communicator.StepConnect{
 			Config:    &b.config.CommConfig.Comm,
 			Host:      commHost(b.config.CommConfig.Comm.Host()),
